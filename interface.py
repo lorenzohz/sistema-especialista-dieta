@@ -95,6 +95,8 @@ class SistemaEspecialistaDietas:
         for i, linha in enumerate(linhas):
             if linha.lstrip().startswith(pred_prefix):
                 ultimo = i
+                while ultimo < len(linhas) and not linhas[ultimo].strip().endswith("."):
+                    ultimo += 1
         return ultimo + 1 if ultimo >= 0 else len(linhas)
 
     def _atributo_valor_para_condicao(self, attr, val):

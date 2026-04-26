@@ -57,28 +57,17 @@ dieta(flexitariana,  'Flexitariana',   0.55).
 
 % DESCRICOES --------------------------------------------------------------------
 
-descricao_dieta(low_carb,
-    'Reducao de carboidratos priorizando proteinas, vegetais e gorduras saudaveis. Eficaz para perda de peso e controle glicemico.').
-descricao_dieta(vegetariana,
-    'Baseada em vegetais. Exclui carnes, mas permite laticinios e ovos. Rica em fibras e antioxidantes.').
-descricao_dieta(vegana,
-    'Estritamente baseada em plantas. Exclui qualquer produto de origem animal, exige suplementacao de B12 e proteina planejada.').
-descricao_dieta(mediterranea,
-    'Focada em alimentos frescos, azeite, peixes, oleaginosas e graos integrais. Fortemente associada a saude cardiovascular.').
-descricao_dieta(hiperproteica,
-    'Alta ingestao de proteinas (1.6-2.2g/kg). Focada na manutencao e hipertrofia muscular, ideal para atletas e praticantes de musculacao.').
-descricao_dieta(low_fat,
-    'Reducao drastica de gorduras totais. Indicada para controle de colesterol e saude cardiovascular em perfis sedentarios a leve.').
-descricao_dieta(sem_gluten,
-    'Exclusao total de trigo, centeio e cevada. Obrigatoria para celiacos e indicada para sensibilidade nao celiaca ao gluten.').
-descricao_dieta(dash,
-    'Desenvolvida para reduzir a pressao arterial. Enfatiza potassio, magnesio e restricao severa de sodio.').
-descricao_dieta(cetogenica,
-    'Altissima ingestao de gorduras e carboidratos quase zerados (< 50g/dia). Induz cetose, potente para perda de peso e controle glicemico tipo 2.').
-descricao_dieta(paleolitica,
-    'Inspirada na alimentacao pre-agricola: carnes, sementes e raizes. Exclui graos, laticinios e alimentos processados.').
-descricao_dieta(flexitariana,
-    'Majoritariamente vegetariana, com consumo esporadico e flexivel de carnes. Equilibra saude, sustentabilidade e praticidade.').
+descricao_dieta(low_carb, 'Reducao de carboidratos priorizando proteinas, vegetais e gorduras saudaveis. Eficaz para perda de peso e controle glicemico.').
+descricao_dieta(vegetariana, 'Baseada em vegetais. Exclui carnes, mas permite laticinios e ovos. Rica em fibras e antioxidantes.').
+descricao_dieta(vegana, 'Estritamente baseada em plantas. Exclui qualquer produto de origem animal, exige suplementacao de B12 e proteina planejada.').
+descricao_dieta(mediterranea, 'Focada em alimentos frescos, azeite, peixes, oleaginosas e graos integrais. Fortemente associada a saude cardiovascular.').
+descricao_dieta(hiperproteica, 'Alta ingestao de proteinas (1.6-2.2g/kg). Focada na manutencao e hipertrofia muscular, ideal para atletas e praticantes de musculacao.').
+descricao_dieta(low_fat, 'Reducao drastica de gorduras totais. Indicada para controle de colesterol e saude cardiovascular em perfis sedentarios a leve.').
+descricao_dieta(sem_gluten, 'Exclusao total de trigo, centeio e cevada. Obrigatoria para celiacos e indicada para sensibilidade nao celiaca ao gluten.').
+descricao_dieta(dash, 'Desenvolvida para reduzir a pressao arterial. Enfatiza potassio, magnesio e restricao severa de sodio.').
+descricao_dieta(cetogenica, 'Altissima ingestao de gorduras e carboidratos quase zerados (< 50g/dia). Induz cetose, potente para perda de peso e controle glicemico tipo 2.').
+descricao_dieta(paleolitica, 'Inspirada na alimentacao pre-agricola: carnes, sementes e raizes. Exclui graos, laticinios e alimentos processados.').
+descricao_dieta(flexitariana, 'Majoritariamente vegetariana, com consumo esporadico e flexivel de carnes. Equilibra saude, sustentabilidade e praticidade.').
 
 % PERGUNTAS ---------------------------------------------------------------------
 % pergunta(Atributo, Tipo, Texto, Opcoes, Justificativa).
@@ -279,6 +268,7 @@ registrar_resposta(X, tem_doenca_cardiaca, sim) :-
     retractall(tem_doenca(X, doenca_cardiaca)),
     retractall(nao_tem_doenca(X, doenca_cardiaca)),
     assertz(tem_doenca(X, doenca_cardiaca)).
+
 registrar_resposta(X, tem_doenca_cardiaca, nao) :-
     retractall(tem_doenca(X, doenca_cardiaca)),
     retractall(nao_tem_doenca(X, doenca_cardiaca)),
