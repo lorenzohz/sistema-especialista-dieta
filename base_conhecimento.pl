@@ -7,10 +7,10 @@
 %% plano(+Id, +Nome, +Categoria, +Probabilidade, +Descricao)
 %%
 %% A probabilidade base varia de 0.0 a 1.0.
-%% O calculo final e: ProbBase + Bonus, onde
-%% Bonus = (opcionais_confirmados / total_criterios_opcionais) * 0.10
+%% O calculo final e: ProbBase * (1 + Score * 0.20), onde
+%% Score = opcionais_confirmados / total_criterios_opcionais.
 %% Isso significa que os criterios opcionais podem
-%% aumentar em ate 10% a probabilidade da recomendacao.
+%% aumentar a ProbBase em ate 20% de forma proporcional.
 
 % ==============================================================
 % CATEGORIA: Emagrecimento

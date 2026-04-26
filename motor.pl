@@ -85,9 +85,13 @@ criterio_opcional_relevante(Criterio) :-
 
 %
 % Calcula a probabilidade final do plano
-% Formula: ProbBase + Bonus
-% Bonus = (opcionais_confirmados / total_criterios_opcionais) * 0.10
-% Isso permite que condicoes opcionais somem ate 10% a mais na probabilidade
+% Formula: ProbBase * (1 + Score * 0.20)
+%   onde Score = opcionais_confirmados / total_criterios_opcionais
+%
+% Diferente da formula aditiva (+ bonus fixo), aqui o bonus e
+% PROPORCIONAL a probabilidade base: quanto maior a ProbBase do plano,
+% maior e o crescimento absoluto causado pelos criterios opcionais.
+% O bonus maximo e de 20% relativo sobre a ProbBase (ex: 0.80 -> 0.96).
 %
 
 probabilidade_final(Plano, ProbFinal) :-
@@ -96,13 +100,13 @@ probabilidade_final(Plano, ProbFinal) :-
     contar_criterios_opcionais(Plano, Confirmados),
     total_criterios_opcionais(Plano, Total),
     (
-        Total =:= 0 ->
-        Bonus = 0
+        Total =:= 0
+    ->  ProbFinal = ProbBase
     ;
-        Bonus is (Confirmados / Total) * 0.10
-    ),
-    ProbFinalTemp is ProbBase + Bonus,
-    ProbFinal is min(1.0, ProbFinalTemp).
+        Score is Confirmados / Total,
+        ProbFinalTemp is ProbBase * (1.0 + Score * 0.20),
+        ProbFinal is min(1.0, ProbFinalTemp)
+    ).
 
 %
 % Gera lista de diagnosticos possiveis ordenados por probabilidade decrescente
