@@ -69,6 +69,7 @@ plano_possivel(Plano) :-
 %
 
 criterio_obrigatorio_pendente(Criterio) :-
+    plano_possivel(Plano),
     criterio_obrigatorio(_, Criterio),
     \+ resposta(Criterio, _).
 
