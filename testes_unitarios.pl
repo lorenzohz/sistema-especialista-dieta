@@ -145,6 +145,23 @@ test(score_cetogenica_alto_com_t2,
     calcular_score(cetogenica, X, S),
     S > ProbBase + 0.40.
 
+test(score_sem_gluten_alto_com_restricao_gluten,
+    [ setup((limpar_fatos, assert_respostas([restricao_gluten-sim]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    dieta(sem_gluten, _, ProbBase),
+    calcular_score(sem_gluten, X, S),
+    S > ProbBase + 0.40.
+
+test(calcular_score_2_respeita_individuo_atual,
+    [ setup((limpar_fatos, assert_respostas([objetivo-perda_peso]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    definir_individuo_atual(X),
+    calcular_score(low_carb, X, SX),
+    calcular_score(low_carb, SAtual),
+    SX =:= SAtual.
+
 :- end_tests(calculo_score_lpo).
 
 % SUITE 2 - Contraindicacoes ----------------------------------------------------
@@ -186,6 +203,24 @@ test(mediterranea_contraindicada_tempo_baixo,
       cleanup(limpar_fatos) ]) :-
     individuo_teste(X),
     once(contraindicada(mediterranea, X)).
+
+test(mediterranea_contraindicada_orcamento_baixo,
+    [ setup((limpar_fatos, assert_respostas([orcamento-baixo]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    once(contraindicada(mediterranea, X)).
+
+test(paleolitica_contraindicada_orcamento_baixo,
+    [ setup((limpar_fatos, assert_respostas([orcamento-baixo]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    once(contraindicada(paleolitica, X)).
+
+test(low_fat_contraindicada_para_ganho_massa,
+    [ setup((limpar_fatos, assert_respostas([objetivo-ganho_massa]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    once(contraindicada(low_fat, X)).
 
 test(low_carb_nao_contraindicada_sem_conflitos,
     [ setup((limpar_fatos, perfil_perda_peso)),
@@ -242,6 +277,39 @@ test(dash_top3_para_perfil_cardiovascular,
     once(nth1(Pos, Lista, _-dash-_)),
     Pos =< 3.
 
+test(cetogenica_ausente_quando_colesterol_alto,
+    [ setup((limpar_fatos,
+             assert_respostas([
+                 tem_colesterol_alto-sim,
+                 objetivo-perda_peso,
+                 disposicao_restricao-sim
+             ]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    recomendar(X, Lista),
+    \+ member(_-cetogenica-_, Lista).
+
+test(recomendar_2_respeita_individuo_atual,
+    [ setup((limpar_fatos, perfil_perda_peso)),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    definir_individuo_atual(X),
+    recomendar(X, ListaX),
+    recomendar(ListaAtual),
+    ListaX = ListaAtual.
+
+test(low_fat_ausente_em_ganho_massa,
+    [ setup((limpar_fatos,
+             assert_respostas([
+                 objetivo-ganho_massa,
+                 nivel_atividade-intenso,
+                 restricao_carne-nao
+             ]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    recomendar(X, Lista),
+    \+ member(_-low_fat-_, Lista).
+
 :- end_tests(recomendacoes_lpo).
 
 % SUITE 4 - Perguntas condicionais ----------------------------------------------
@@ -282,6 +350,21 @@ test(diabetes_ativa_tipo_diabetes,
     listar_perguntas_condicionais_ativas(X, L),
     member(tipo_diabetes, L).
 
+test(condicional_nao_repete_apos_resposta,
+    [ setup((limpar_fatos,
+             assert_respostas([restricao_carne-sim, restricao_laticinios-nao]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    listar_perguntas_condicionais_ativas(X, L),
+    \+ member(restricao_laticinios, L).
+
+test(tipo_diabetes_nao_ativa_quando_sem_diabetes,
+    [ setup((limpar_fatos, assert_respostas([tem_diabetes-nao]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    listar_perguntas_condicionais_ativas(X, L),
+    \+ member(tipo_diabetes, L).
+
 :- end_tests(perguntas_condicionais_lpo).
 
 % SUITE 5 - Modelo relacional ---------------------------------------------------
@@ -321,6 +404,20 @@ test(contraindicacao_estrita_sem_peso,
     individuo_teste(X),
     once(contraindicada(cetogenica, X)).
 
+test(tem_diabetes_nao_limpa_tipo_diabetes,
+    [ setup((limpar_fatos,
+             assert_respostas([tem_diabetes-sim, tipo_diabetes-tipo_2, tem_diabetes-nao]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    \+ tem_tipo_diabetes(X, _),
+    once(resposta_usuario(X, tem_diabetes, nao)).
+
+test(definir_individuo_atual_garante_paciente,
+    [ setup(limpar_fatos),
+      cleanup((retractall(paciente(usuario_extra_teste)), limpar_fatos)) ]) :-
+    definir_individuo_atual(usuario_extra_teste),
+    paciente(usuario_extra_teste).
+
 :- end_tests(modelo_relacional_lpo).
 
 % SUITE 6 - Explicabilidade -----------------------------------------------------
@@ -340,6 +437,28 @@ test(razoes_exclusao_nao_vazia_em_conflito,
     individuo_teste(X),
     razoes_exclusao(cetogenica, X, Razoes),
     Razoes \= [].
+
+test(razoes_exclusao_vazia_sem_conflito,
+    [ setup((limpar_fatos, assert_respostas([objetivo-perda_peso]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    razoes_exclusao(low_carb, X, Razoes),
+    Razoes = [].
+
+test(razoes_exclusao_multiplas_para_cetogenica,
+    [ setup((limpar_fatos,
+             assert_respostas([tem_colesterol_alto-sim, tem_doenca_cardiaca-sim]))),
+      cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    razoes_exclusao(cetogenica, X, Razoes),
+    length(Razoes, N),
+    N >= 2.
+
+test(fatos_confirmados_vazio_sem_evidencias,
+    [ setup(limpar_fatos), cleanup(limpar_fatos) ]) :-
+    individuo_teste(X),
+    fatos_confirmados(low_carb, X, Pesos),
+    Pesos = [].
 
 test(detalhes_pergunta_retorna_estrutura_correta) :-
     detalhes_pergunta(objetivo, Texto, Opcoes, Justificativa),
