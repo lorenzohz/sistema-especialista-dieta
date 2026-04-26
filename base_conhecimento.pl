@@ -1,21 +1,47 @@
 :- set_prolog_flag(encoding, utf8).
 
-% ==============================================================
-%  BASE DE CONHECIMENTO — Sistema Especialista de Dietas
-%  Disciplina: Introducao a Inteligencia Artificial — UEM
+% ==============================================================================
+% BASE DE CONHECIMENTO - Sistema Especialista de Dietas
+% Modelo LPO: Individuos + relacoes
 %
-%  Modelo de Probabilidade:
-%    Score = min(0.99, ProbBase + soma(pesos dos suportes satisfeitos))
+% Inferencia probabilistica (heuristica):
+%   Score = min(0.99, ProbBase + soma(evidencias satisfeitas))
 %
-%    - ProbBase: probabilidade a priori de cada dieta (0.0-1.0)
-%    - Pesos em suporta/4: contribuicao de cada fato do usuario
-%    - Teto em 0.99 para evitar certeza absoluta
-%    - Convertido para porcentagem inteira na exibicao (round * 100)
-% ==============================================================
+% Regras clinicas fundamentais:
+%   contraindicada/2 e estritamente booleana (verdadeiro/falso)
+% ==============================================================================
 
-% DIETAS -------------------------------------------------------
-% dieta(Id, NomeExibicao, ProbabilidadeBase).
+% ENTIDADES ---------------------------------------------------------------------
+
 :- dynamic dieta/3.
+:- dynamic descricao_dieta/2.
+:- dynamic pergunta/5.
+:- dynamic paciente/1.
+
+% PERFIL DO INDIVIDUO -----------------------------------------------------------
+
+:- dynamic tem_objetivo/2.
+:- dynamic tem_nivel_atividade/2.
+:- dynamic tem_faixa_etaria/2.
+:- dynamic tem_imc_faixa/2.
+:- dynamic tem_tempo_preparo/2.
+:- dynamic tem_orcamento/2.
+:- dynamic tem_tipo_diabetes/2.
+:- dynamic tem_frequencia_carne/2.
+:- dynamic tem_disposicao_restricao/2.
+
+:- dynamic tem_doenca/2.
+:- dynamic nao_tem_doenca/2.
+:- dynamic tem_restricao/2.
+:- dynamic nao_tem_restricao/2.
+
+:- dynamic evidencia/3.
+:- dynamic contraindicada/2.
+
+paciente(usuario_atual).
+
+% DIETAS ------------------------------------------------------------------------
+% dieta(Id, NomeExibicao, ProbabilidadeBase).
 
 dieta(low_carb,      'Low Carb',       0.50).
 dieta(vegetariana,   'Vegetariana',    0.50).
@@ -29,8 +55,7 @@ dieta(cetogenica,    'Cetogenica',     0.40).
 dieta(paleolitica,   'Paleolitica',    0.45).
 dieta(flexitariana,  'Flexitariana',   0.55).
 
-% DESCRICOES ---------------------------------------------------
-:- dynamic descricao_dieta/2.
+% DESCRICOES --------------------------------------------------------------------
 
 descricao_dieta(low_carb,
     'Reducao de carboidratos priorizando proteinas, vegetais e gorduras saudaveis. Eficaz para perda de peso e controle glicemico.').
@@ -55,295 +80,396 @@ descricao_dieta(paleolitica,
 descricao_dieta(flexitariana,
     'Majoritariamente vegetariana, com consumo esporadico e flexivel de carnes. Equilibra saude, sustentabilidade e praticidade.').
 
-% PERGUNTAS ----------------------------------------------------
-% pergunta(Atributo, Tipo, TextoPergunta, Opcoes, Justificativa).
-%
-% Tipo = base                         → sempre exibida
-% Tipo = depende(AttrPai, ValEsper)   → exibida so se AttrPai=ValEsper
-%
-:- dynamic pergunta/5.
-
-% --- Perguntas base -------------------------------------------
+% PERGUNTAS ---------------------------------------------------------------------
+% pergunta(Atributo, Tipo, Texto, Opcoes, Justificativa).
+% Tipo = base | depende(AttrPai, ValEsperado)
 
 pergunta(objetivo, base,
     'Qual e o seu principal objetivo com a dieta?',
     [perda_peso, ganho_massa, saude_geral, controle_cronicas, performance_atletica],
-    'O objetivo e a diretriz central que orienta todo o perfil nutricional recomendado.').
+    'O objetivo orienta o perfil nutricional recomendado.').
 
 pergunta(nivel_atividade, base,
     'Qual e o seu nivel de atividade fisica semanal?',
     [sedentario, leve, moderado, intenso],
-    'O nivel de atividade determina a demanda calorica, proteica e a tolerancia a diferentes padroes alimentares.').
+    'O nivel de atividade altera demanda calorica e proteica.').
 
 pergunta(faixa_etaria, base,
     'Qual e a sua faixa etaria?',
     [jovem, adulto, idoso],
-    'A faixa etaria influencia as necessidades nutricionais, especialmente de proteinas, calcio e sodio.').
+    'A faixa etaria afeta necessidades nutricionais e seguranca clinica.').
 
 pergunta(imc_faixa, base,
     'Como voce classificaria seu peso corporal atual?',
     [abaixo_peso, normal, sobrepeso, obesidade],
-    'O IMC orienta a intensidade da restricao ou suplementacao calorica necessaria na dieta.').
+    'O IMC orienta a intensidade de ajuste energetico da dieta.').
 
 pergunta(tem_diabetes, base,
-    'Voce possui diagnostico de diabetes (qualquer tipo) ou pre-diabetes?',
+    'Voce possui diabetes ou pre-diabetes?',
     [sim, nao],
-    'O diabetes exige controle rigoroso do indice glicemico dos alimentos e pode tornar certas dietas mais ou menos adequadas.').
+    'Diabetes exige controle de glicemia e carboidratos.').
 
 pergunta(tem_hipertensao, base,
-    'Voce possui pressao arterial alta (hipertensao) diagnosticada?',
+    'Voce possui hipertensao diagnosticada?',
     [sim, nao],
-    'A hipertensao indica necessidade de reducao de sodio e aumento de potassio, priorizando dietas com esse perfil.').
+    'Hipertensao prioriza dietas com controle de sodio e perfil cardioprotetor.').
 
 pergunta(tem_colesterol_alto, base,
-    'Voce possui colesterol total elevado ou LDL alto diagnosticado?',
+    'Voce possui colesterol elevado?',
     [sim, nao],
-    'Colesterol elevado orienta a preferencia por dietas com baixo teor de gordura saturada e ricas em fibras e gorduras insaturadas.').
+    'Colesterol elevado favorece padroes com menor gordura saturada.').
 
 pergunta(tem_problemas_renais, base,
-    'Voce possui doenca renal cronica ou insuficiencia renal diagnosticada?',
+    'Voce possui doenca renal cronica ou insuficiencia renal?',
     [sim, nao],
-    'Problemas renais contraindicam dietas com alta carga proteica, pois sobrecarregam os rins.').
+    'Doenca renal restringe dietas com alta carga proteica.').
 
 pergunta(tem_doenca_cardiaca, base,
-    'Voce possui doenca cardiaca diagnosticada (insuficiencia, arritmia, historico de infarto)?',
+    'Voce possui doenca cardiaca diagnosticada?',
     [sim, nao],
-    'Doencas cardiacas tornam dietas de alto teor de gordura saturada de alto risco e priorizam padroes cardioprotetores.').
+    'Doenca cardiaca restringe dietas de alto risco cardiovascular.').
 
 pergunta(restricao_carne, base,
-    'Voce possui restricao ao consumo de carnes (bovina, frango, peixe)?',
+    'Voce possui restricao ao consumo de carnes?',
     [sim, nao],
-    'A restricao a carne elimina dietas baseadas em proteinas animais e direciona para perfis vegetarianos ou veganos.').
+    'Restricao de carne direciona para perfis vegetarianos ou veganos.').
 
 pergunta(alergia_lactose, base,
-    'Voce possui intolerancia a lactose ou alergia a proteinas do leite?',
+    'Voce possui intolerancia a lactose ou alergia a proteina do leite?',
     [sim, nao],
-    'A intolerancia a lactose afeta a adequacao de dietas que dependem de laticinios como fonte proteica principal.').
+    'A restricao a lactose altera fontes proteicas e planejamento alimentar.').
 
 pergunta(restricao_gluten, base,
-    'Voce possui doenca celiaca ou sensibilidade ao gluten (confirmada ou suspeita)?',
+    'Voce possui doenca celiaca ou sensibilidade ao gluten?',
     [sim, nao],
-    'A sensibilidade ao gluten exige adaptacao dietetica especifica independentemente de outras condicoes de saude.').
+    'A restricao ao gluten exige adaptacoes especificas.').
 
 pergunta(tempo_preparo, base,
-    'Como e a sua disponibilidade de tempo para preparar refeicoes?',
+    'Como e sua disponibilidade de tempo para preparar refeicoes?',
     [baixa, media, alta],
-    'Dietas com alimentos frescos, integrais e proteinas variadas exigem maior tempo de cozinha e planejamento semanal.').
+    'Algumas dietas exigem maior preparo e planejamento.').
 
 pergunta(orcamento, base,
-    'Como e o seu orcamento mensal para alimentacao?',
+    'Como e seu orcamento mensal para alimentacao?',
     [baixo, flexivel, alto],
-    'Algumas dietas exigem ingredientes frescos, organicos ou proteinas de alto valor biologico com custo elevado.').
-
-% --- Perguntas condicionais -----------------------------------
+    'O custo de ingredientes pode inviabilizar certos padroes alimentares.').
 
 pergunta(frequencia_carne, depende(restricao_carne, nao),
-    'Voce consome carne, com qual frequencia semanal?',
+    'Voce consome carne com qual frequencia semanal?',
     [diariamente, ocasionalmente, raramente],
-    'Distingue o perfil flexitariano (consumo esporadico) do onivoro tradicional, influenciando saude e sustentabilidade.').
+    'Distingue perfis onivoros e flexitarianos.').
 
 pergunta(restricao_laticinios, depende(restricao_carne, sim),
-    'Ja que voce nao consome carne, possui restricao a laticinios e ovos tambem?',
+    'Ja que voce nao consome carne, tambem restringe laticinios e ovos?',
     [sim, nao],
-    'A restricao a laticinios e ovos distingue o perfil vegetariano do vegano, com impacto direto nas fontes proteicas.').
+    'Distingue perfil vegetariano de vegano.').
 
 pergunta(disposicao_restricao, depende(objetivo, perda_peso),
-    'Para perder peso, voce esta disposto(a) a cortar drasticamente grupos alimentares como carboidratos?',
+    'Para perder peso, voce aceita cortar grupos alimentares de forma intensa?',
     [sim, nao],
-    'Dietas cetogenica e low carb intenso exigem alta restricao e disciplina; sem essa disposicao, sao contraindicadas.').
+    'Dietas muito restritivas exigem alta adesao.').
 
 pergunta(tipo_diabetes, depende(tem_diabetes, sim),
     'Qual e o tipo do seu diabetes?',
     [tipo_1, tipo_2, pre_diabetes],
-    'Tipo 1 exige gestao insulinica precisa; tipo 2 e pre-diabetes respondem bem a restricao de carboidratos e cetose.').
+    'Tipo clinico altera seguranca e conduta nutricional.').
 
-% REGRAS DE SUPORTE --------------------------------------------
-% suporta(Dieta, Atributo, Valor, Peso).
-%
-% Peso: quanto esse fato contribui ao score final da dieta.
-% Score = min(0.99, ProbBase + sum(pesos satisfeitos))
-:- dynamic suporta/4.
+% MAPEAMENTO DE RESPOSTAS -------------------------------------------------------
+% resposta_usuario(+Individuo, +Atributo, ?Valor)
 
-% --- Low Carb -------------------------------------------------
-suporta(low_carb, objetivo,            perda_peso,    0.25).
-suporta(low_carb, objetivo,            controle_cronicas, 0.10).
-suporta(low_carb, tem_diabetes,        sim,           0.15).
-suporta(low_carb, tipo_diabetes,       tipo_2,        0.10).
-suporta(low_carb, tipo_diabetes,       pre_diabetes,  0.08).
-suporta(low_carb, nivel_atividade,     sedentario,    0.05).
-suporta(low_carb, nivel_atividade,     leve,          0.05).
-suporta(low_carb, imc_faixa,          sobrepeso,     0.08).
-suporta(low_carb, imc_faixa,          obesidade,     0.12).
-suporta(low_carb, restricao_carne,    nao,           0.05).
-suporta(low_carb, disposicao_restricao, sim,         0.08).
-suporta(low_carb, tem_colesterol_alto, sim,           0.05).
+resposta_usuario(X, objetivo, Valor)            :- tem_objetivo(X, Valor).
+resposta_usuario(X, nivel_atividade, Valor)     :- tem_nivel_atividade(X, Valor).
+resposta_usuario(X, faixa_etaria, Valor)        :- tem_faixa_etaria(X, Valor).
+resposta_usuario(X, imc_faixa, Valor)           :- tem_imc_faixa(X, Valor).
+resposta_usuario(X, tempo_preparo, Valor)       :- tem_tempo_preparo(X, Valor).
+resposta_usuario(X, orcamento, Valor)           :- tem_orcamento(X, Valor).
+resposta_usuario(X, tipo_diabetes, Valor)       :- tem_tipo_diabetes(X, Valor).
+resposta_usuario(X, frequencia_carne, Valor)    :- tem_frequencia_carne(X, Valor).
+resposta_usuario(X, disposicao_restricao, Valor):- tem_disposicao_restricao(X, Valor).
 
-% --- Vegetariana ----------------------------------------------
-suporta(vegetariana, restricao_carne,      sim,             0.30).
-suporta(vegetariana, restricao_laticinios, nao,             0.10).
-suporta(vegetariana, objetivo,             saude_geral,     0.10).
-suporta(vegetariana, tem_colesterol_alto,  sim,             0.08).
-suporta(vegetariana, nivel_atividade,      moderado,        0.05).
-suporta(vegetariana, alergia_lactose,      nao,             0.05).
-suporta(vegetariana, faixa_etaria,         jovem,           0.05).
-suporta(vegetariana, faixa_etaria,         adulto,          0.05).
-suporta(vegetariana, orcamento,            flexivel,        0.05).
+resposta_usuario(X, tem_diabetes, sim)          :- tem_doenca(X, diabetes).
+resposta_usuario(X, tem_diabetes, nao)          :- nao_tem_doenca(X, diabetes).
+resposta_usuario(X, tem_hipertensao, sim)       :- tem_doenca(X, hipertensao).
+resposta_usuario(X, tem_hipertensao, nao)       :- nao_tem_doenca(X, hipertensao).
+resposta_usuario(X, tem_colesterol_alto, sim)   :- tem_doenca(X, colesterol_alto).
+resposta_usuario(X, tem_colesterol_alto, nao)   :- nao_tem_doenca(X, colesterol_alto).
+resposta_usuario(X, tem_problemas_renais, sim)  :- tem_doenca(X, problemas_renais).
+resposta_usuario(X, tem_problemas_renais, nao)  :- nao_tem_doenca(X, problemas_renais).
+resposta_usuario(X, tem_doenca_cardiaca, sim)   :- tem_doenca(X, doenca_cardiaca).
+resposta_usuario(X, tem_doenca_cardiaca, nao)   :- nao_tem_doenca(X, doenca_cardiaca).
 
-% --- Vegana ---------------------------------------------------
-suporta(vegana, restricao_carne,      sim,             0.20).
-suporta(vegana, restricao_laticinios, sim,             0.30).
-suporta(vegana, alergia_lactose,      sim,             0.10).
-suporta(vegana, objetivo,             saude_geral,     0.08).
-suporta(vegana, tem_colesterol_alto,  sim,             0.08).
-suporta(vegana, faixa_etaria,         jovem,           0.05).
+resposta_usuario(X, restricao_carne, sim)       :- tem_restricao(X, carne).
+resposta_usuario(X, restricao_carne, nao)       :- nao_tem_restricao(X, carne).
+resposta_usuario(X, alergia_lactose, sim)       :- tem_restricao(X, lactose).
+resposta_usuario(X, alergia_lactose, nao)       :- nao_tem_restricao(X, lactose).
+resposta_usuario(X, restricao_gluten, sim)      :- tem_restricao(X, gluten).
+resposta_usuario(X, restricao_gluten, nao)      :- nao_tem_restricao(X, gluten).
+resposta_usuario(X, restricao_laticinios, sim)  :- tem_restricao(X, laticinios).
+resposta_usuario(X, restricao_laticinios, nao)  :- nao_tem_restricao(X, laticinios).
 
-% --- Mediterranea ---------------------------------------------
-suporta(mediterranea, objetivo,           saude_geral,        0.15).
-suporta(mediterranea, objetivo,           controle_cronicas,  0.12).
-suporta(mediterranea, objetivo,           performance_atletica, 0.05).
-suporta(mediterranea, restricao_carne,    nao,                0.05).
-suporta(mediterranea, tem_colesterol_alto, sim,               0.12).
-suporta(mediterranea, tem_hipertensao,    sim,                0.08).
-suporta(mediterranea, tem_doenca_cardiaca, sim,               0.12).
-suporta(mediterranea, nivel_atividade,    moderado,           0.05).
-suporta(mediterranea, nivel_atividade,    intenso,            0.05).
-suporta(mediterranea, orcamento,          flexivel,           0.05).
-suporta(mediterranea, orcamento,          alto,               0.08).
-suporta(mediterranea, faixa_etaria,       idoso,              0.08).
-suporta(mediterranea, faixa_etaria,       adulto,             0.05).
+% REGISTRO DE RESPOSTA ----------------------------------------------------------
+% registrar_resposta(+Individuo, +Atributo, +Valor)
 
-% --- Hiperproteica --------------------------------------------
-suporta(hiperproteica, objetivo,          ganho_massa,          0.30).
-suporta(hiperproteica, objetivo,          performance_atletica, 0.20).
-suporta(hiperproteica, nivel_atividade,   intenso,              0.20).
-suporta(hiperproteica, nivel_atividade,   moderado,             0.05).
-suporta(hiperproteica, restricao_carne,   nao,                  0.08).
-suporta(hiperproteica, imc_faixa,         abaixo_peso,          0.08).
-suporta(hiperproteica, imc_faixa,         normal,               0.05).
-suporta(hiperproteica, faixa_etaria,      jovem,                0.08).
-suporta(hiperproteica, faixa_etaria,      adulto,               0.05).
-suporta(hiperproteica, frequencia_carne,  diariamente,          0.05).
+registrar_resposta(X, objetivo, Valor) :-
+    retractall(tem_objetivo(X, _)),
+    assertz(tem_objetivo(X, Valor)).
+registrar_resposta(X, nivel_atividade, Valor) :-
+    retractall(tem_nivel_atividade(X, _)),
+    assertz(tem_nivel_atividade(X, Valor)).
+registrar_resposta(X, faixa_etaria, Valor) :-
+    retractall(tem_faixa_etaria(X, _)),
+    assertz(tem_faixa_etaria(X, Valor)).
+registrar_resposta(X, imc_faixa, Valor) :-
+    retractall(tem_imc_faixa(X, _)),
+    assertz(tem_imc_faixa(X, Valor)).
+registrar_resposta(X, tempo_preparo, Valor) :-
+    retractall(tem_tempo_preparo(X, _)),
+    assertz(tem_tempo_preparo(X, Valor)).
+registrar_resposta(X, orcamento, Valor) :-
+    retractall(tem_orcamento(X, _)),
+    assertz(tem_orcamento(X, Valor)).
+registrar_resposta(X, tipo_diabetes, Valor) :-
+    retractall(tem_tipo_diabetes(X, _)),
+    assertz(tem_tipo_diabetes(X, Valor)).
+registrar_resposta(X, frequencia_carne, Valor) :-
+    retractall(tem_frequencia_carne(X, _)),
+    assertz(tem_frequencia_carne(X, Valor)).
+registrar_resposta(X, disposicao_restricao, Valor) :-
+    retractall(tem_disposicao_restricao(X, _)),
+    assertz(tem_disposicao_restricao(X, Valor)).
 
-% --- Low Fat --------------------------------------------------
-suporta(low_fat, objetivo,           perda_peso,      0.10).
-suporta(low_fat, objetivo,           saude_geral,     0.10).
-suporta(low_fat, objetivo,           controle_cronicas, 0.08).
-suporta(low_fat, tem_colesterol_alto, sim,            0.20).
-suporta(low_fat, tem_hipertensao,    sim,             0.10).
-suporta(low_fat, tem_doenca_cardiaca, sim,            0.15).
-suporta(low_fat, nivel_atividade,    sedentario,      0.05).
-suporta(low_fat, nivel_atividade,    leve,            0.05).
-suporta(low_fat, faixa_etaria,       idoso,           0.10).
-suporta(low_fat, imc_faixa,          sobrepeso,       0.05).
-suporta(low_fat, imc_faixa,          obesidade,       0.08).
+registrar_resposta(X, tem_diabetes, sim) :-
+    retractall(tem_doenca(X, diabetes)),
+    retractall(nao_tem_doenca(X, diabetes)),
+    assertz(tem_doenca(X, diabetes)).
+registrar_resposta(X, tem_diabetes, nao) :-
+    retractall(tem_doenca(X, diabetes)),
+    retractall(nao_tem_doenca(X, diabetes)),
+    retractall(tem_tipo_diabetes(X, _)),
+    assertz(nao_tem_doenca(X, diabetes)).
 
-% --- Sem Gluten -----------------------------------------------
-suporta(sem_gluten, restricao_gluten, sim,         0.50).
-suporta(sem_gluten, objetivo,         saude_geral, 0.05).
+registrar_resposta(X, tem_hipertensao, sim) :-
+    retractall(tem_doenca(X, hipertensao)),
+    retractall(nao_tem_doenca(X, hipertensao)),
+    assertz(tem_doenca(X, hipertensao)).
+registrar_resposta(X, tem_hipertensao, nao) :-
+    retractall(tem_doenca(X, hipertensao)),
+    retractall(nao_tem_doenca(X, hipertensao)),
+    assertz(nao_tem_doenca(X, hipertensao)).
 
-% --- DASH -----------------------------------------------------
-suporta(dash, tem_hipertensao,     sim,               0.30).
-suporta(dash, objetivo,            controle_cronicas, 0.20).
-suporta(dash, objetivo,            saude_geral,       0.08).
-suporta(dash, restricao_carne,     nao,               0.05).
-suporta(dash, tem_colesterol_alto, sim,               0.10).
-suporta(dash, tem_doenca_cardiaca, sim,               0.12).
-suporta(dash, faixa_etaria,        idoso,             0.10).
-suporta(dash, faixa_etaria,        adulto,            0.05).
-suporta(dash, nivel_atividade,     sedentario,        0.05).
-suporta(dash, nivel_atividade,     leve,              0.05).
-suporta(dash, orcamento,           flexivel,          0.05).
+registrar_resposta(X, tem_colesterol_alto, sim) :-
+    retractall(tem_doenca(X, colesterol_alto)),
+    retractall(nao_tem_doenca(X, colesterol_alto)),
+    assertz(tem_doenca(X, colesterol_alto)).
+registrar_resposta(X, tem_colesterol_alto, nao) :-
+    retractall(tem_doenca(X, colesterol_alto)),
+    retractall(nao_tem_doenca(X, colesterol_alto)),
+    assertz(nao_tem_doenca(X, colesterol_alto)).
 
-% --- Cetogenica -----------------------------------------------
-suporta(cetogenica, objetivo,             perda_peso,    0.15).
-suporta(cetogenica, tem_diabetes,         sim,           0.15).
-suporta(cetogenica, tipo_diabetes,        tipo_2,        0.15).
-suporta(cetogenica, tipo_diabetes,        pre_diabetes,  0.10).
-suporta(cetogenica, disposicao_restricao, sim,           0.28).
-suporta(cetogenica, orcamento,            alto,          0.08).
-suporta(cetogenica, imc_faixa,           obesidade,     0.12).
-suporta(cetogenica, nivel_atividade,      sedentario,    0.05).
+registrar_resposta(X, tem_problemas_renais, sim) :-
+    retractall(tem_doenca(X, problemas_renais)),
+    retractall(nao_tem_doenca(X, problemas_renais)),
+    assertz(tem_doenca(X, problemas_renais)).
+registrar_resposta(X, tem_problemas_renais, nao) :-
+    retractall(tem_doenca(X, problemas_renais)),
+    retractall(nao_tem_doenca(X, problemas_renais)),
+    assertz(nao_tem_doenca(X, problemas_renais)).
 
-% --- Paleolitica ----------------------------------------------
-suporta(paleolitica, objetivo,          saude_geral,          0.15).
-suporta(paleolitica, objetivo,          performance_atletica, 0.12).
-suporta(paleolitica, restricao_gluten,  sim,                  0.15).
-suporta(paleolitica, orcamento,         alto,                 0.10).
-suporta(paleolitica, orcamento,         flexivel,             0.05).
-suporta(paleolitica, nivel_atividade,   intenso,              0.10).
-suporta(paleolitica, nivel_atividade,   moderado,             0.05).
-suporta(paleolitica, restricao_carne,   nao,                  0.05).
-suporta(paleolitica, faixa_etaria,      jovem,                0.08).
-suporta(paleolitica, faixa_etaria,      adulto,               0.05).
+registrar_resposta(X, tem_doenca_cardiaca, sim) :-
+    retractall(tem_doenca(X, doenca_cardiaca)),
+    retractall(nao_tem_doenca(X, doenca_cardiaca)),
+    assertz(tem_doenca(X, doenca_cardiaca)).
+registrar_resposta(X, tem_doenca_cardiaca, nao) :-
+    retractall(tem_doenca(X, doenca_cardiaca)),
+    retractall(nao_tem_doenca(X, doenca_cardiaca)),
+    assertz(nao_tem_doenca(X, doenca_cardiaca)).
 
-% --- Flexitariana ---------------------------------------------
-suporta(flexitariana, restricao_carne,    nao,            0.05).
-suporta(flexitariana, frequencia_carne,   ocasionalmente, 0.25).
-suporta(flexitariana, frequencia_carne,   raramente,      0.30).
-suporta(flexitariana, objetivo,           saude_geral,    0.12).
-suporta(flexitariana, objetivo,           controle_cronicas, 0.08).
-suporta(flexitariana, faixa_etaria,       jovem,          0.05).
-suporta(flexitariana, faixa_etaria,       adulto,         0.05).
-suporta(flexitariana, nivel_atividade,    moderado,       0.05).
-suporta(flexitariana, tem_colesterol_alto, sim,           0.05).
-suporta(flexitariana, orcamento,          flexivel,       0.05).
-suporta(flexitariana, orcamento,          baixo,          0.05).
+registrar_resposta(X, restricao_carne, sim) :-
+    retractall(tem_restricao(X, carne)),
+    retractall(nao_tem_restricao(X, carne)),
+    assertz(tem_restricao(X, carne)).
+registrar_resposta(X, restricao_carne, nao) :-
+    retractall(tem_restricao(X, carne)),
+    retractall(nao_tem_restricao(X, carne)),
+    retractall(tem_frequencia_carne(X, _)),
+    assertz(nao_tem_restricao(X, carne)).
 
-% REGRAS DE EXCLUSAO -------------------------------------------
-% exclui(Dieta, Atributo, Valor).
-%
-% Condicao que torna a dieta INCOMPATIVEL com o perfil do usuario.
-% Dietas excluidas sao removidas do resultado antes da exibicao.
-:- dynamic exclui/3.
+registrar_resposta(X, alergia_lactose, sim) :-
+    retractall(tem_restricao(X, lactose)),
+    retractall(nao_tem_restricao(X, lactose)),
+    assertz(tem_restricao(X, lactose)).
+registrar_resposta(X, alergia_lactose, nao) :-
+    retractall(tem_restricao(X, lactose)),
+    retractall(nao_tem_restricao(X, lactose)),
+    assertz(nao_tem_restricao(X, lactose)).
 
-% Vegetariano nao pode seguir dieta hiperproteica baseada em carne
-exclui(hiperproteica, restricao_carne, sim).
+registrar_resposta(X, restricao_gluten, sim) :-
+    retractall(tem_restricao(X, gluten)),
+    retractall(nao_tem_restricao(X, gluten)),
+    assertz(tem_restricao(X, gluten)).
+registrar_resposta(X, restricao_gluten, nao) :-
+    retractall(tem_restricao(X, gluten)),
+    retractall(nao_tem_restricao(X, gluten)),
+    assertz(nao_tem_restricao(X, gluten)).
 
-% Doenca renal contraindicada em dietas de alta proteina (sobrecarga glomerular)
-exclui(hiperproteica, tem_problemas_renais, sim).
+registrar_resposta(X, restricao_laticinios, sim) :-
+    retractall(tem_restricao(X, laticinios)),
+    retractall(nao_tem_restricao(X, laticinios)),
+    assertz(tem_restricao(X, laticinios)).
+registrar_resposta(X, restricao_laticinios, nao) :-
+    retractall(tem_restricao(X, laticinios)),
+    retractall(nao_tem_restricao(X, laticinios)),
+    assertz(nao_tem_restricao(X, laticinios)).
 
-% Quem nao restringe laticinios nao deve seguir dieta vegana pura
-% (vegana exige restricao total de produtos animais, incluindo laticinios)
-exclui(vegetariana, restricao_laticinios, sim).
+% LIMPEZA DE PERFIL --------------------------------------------------------------
 
-% Quem nao aceita cortar carboidratos nao pode seguir a cetogenica
-exclui(cetogenica, disposicao_restricao, nao).
+limpar_respostas(X) :-
+    retractall(tem_objetivo(X, _)),
+    retractall(tem_nivel_atividade(X, _)),
+    retractall(tem_faixa_etaria(X, _)),
+    retractall(tem_imc_faixa(X, _)),
+    retractall(tem_tempo_preparo(X, _)),
+    retractall(tem_orcamento(X, _)),
+    retractall(tem_tipo_diabetes(X, _)),
+    retractall(tem_frequencia_carne(X, _)),
+    retractall(tem_disposicao_restricao(X, _)),
+    retractall(tem_doenca(X, _)),
+    retractall(nao_tem_doenca(X, _)),
+    retractall(tem_restricao(X, _)),
+    retractall(nao_tem_restricao(X, _)).
 
-% Colesterol alto: cetogenica contraindicada (alto consumo de gorduras saturadas)
-exclui(cetogenica, tem_colesterol_alto, sim).
+% EVIDENCIAS HEURISTICAS ---------------------------------------------------------
+% evidencia(Dieta, X, Peso) :- Condicao(X, Valor).
 
-% Doenca cardiaca: cetogenica contraindicada (risco cardiovascular do alto teor de gordura)
-exclui(cetogenica, tem_doenca_cardiaca, sim).
+evidencia(low_carb, X, 0.25) :- tem_objetivo(X, perda_peso).
+evidencia(low_carb, X, 0.10) :- tem_objetivo(X, controle_cronicas).
+evidencia(low_carb, X, 0.15) :- tem_doenca(X, diabetes).
+evidencia(low_carb, X, 0.10) :- tem_tipo_diabetes(X, tipo_2).
+evidencia(low_carb, X, 0.08) :- tem_tipo_diabetes(X, pre_diabetes).
+evidencia(low_carb, X, 0.05) :- tem_nivel_atividade(X, sedentario).
+evidencia(low_carb, X, 0.05) :- tem_nivel_atividade(X, leve).
+evidencia(low_carb, X, 0.08) :- tem_imc_faixa(X, sobrepeso).
+evidencia(low_carb, X, 0.12) :- tem_imc_faixa(X, obesidade).
+evidencia(low_carb, X, 0.05) :- nao_tem_restricao(X, carne).
+evidencia(low_carb, X, 0.08) :- tem_disposicao_restricao(X, sim).
+evidencia(low_carb, X, 0.05) :- tem_doenca(X, colesterol_alto).
 
-% Baixo tempo de preparo: mediterranea exige frescor e variedade diaria
-exclui(mediterranea, tempo_preparo, baixa).
+evidencia(vegetariana, X, 0.30) :- tem_restricao(X, carne).
+evidencia(vegetariana, X, 0.10) :- nao_tem_restricao(X, laticinios).
+evidencia(vegetariana, X, 0.10) :- tem_objetivo(X, saude_geral).
+evidencia(vegetariana, X, 0.08) :- tem_doenca(X, colesterol_alto).
+evidencia(vegetariana, X, 0.05) :- tem_nivel_atividade(X, moderado).
+evidencia(vegetariana, X, 0.05) :- nao_tem_restricao(X, lactose).
+evidencia(vegetariana, X, 0.05) :- tem_faixa_etaria(X, jovem).
+evidencia(vegetariana, X, 0.05) :- tem_faixa_etaria(X, adulto).
+evidencia(vegetariana, X, 0.05) :- tem_orcamento(X, flexivel).
 
-% Orcamento baixo: mediterranea exige azeite, peixes e oleaginosas de custo elevado
-exclui(mediterranea, orcamento, baixo).
+evidencia(vegana, X, 0.20) :- tem_restricao(X, carne).
+evidencia(vegana, X, 0.30) :- tem_restricao(X, laticinios).
+evidencia(vegana, X, 0.10) :- tem_restricao(X, lactose).
+evidencia(vegana, X, 0.08) :- tem_objetivo(X, saude_geral).
+evidencia(vegana, X, 0.08) :- tem_doenca(X, colesterol_alto).
+evidencia(vegana, X, 0.05) :- tem_faixa_etaria(X, jovem).
 
-% Baixo tempo de preparo: vegana exige planejamento rigido de proteinas e micronutrientes
-exclui(vegana, tempo_preparo, baixa).
+evidencia(mediterranea, X, 0.15) :- tem_objetivo(X, saude_geral).
+evidencia(mediterranea, X, 0.12) :- tem_objetivo(X, controle_cronicas).
+evidencia(mediterranea, X, 0.05) :- tem_objetivo(X, performance_atletica).
+evidencia(mediterranea, X, 0.05) :- nao_tem_restricao(X, carne).
+evidencia(mediterranea, X, 0.12) :- tem_doenca(X, colesterol_alto).
+evidencia(mediterranea, X, 0.08) :- tem_doenca(X, hipertensao).
+evidencia(mediterranea, X, 0.12) :- tem_doenca(X, doenca_cardiaca).
+evidencia(mediterranea, X, 0.05) :- tem_nivel_atividade(X, moderado).
+evidencia(mediterranea, X, 0.05) :- tem_nivel_atividade(X, intenso).
+evidencia(mediterranea, X, 0.05) :- tem_orcamento(X, flexivel).
+evidencia(mediterranea, X, 0.08) :- tem_orcamento(X, alto).
+evidencia(mediterranea, X, 0.08) :- tem_faixa_etaria(X, idoso).
+evidencia(mediterranea, X, 0.05) :- tem_faixa_etaria(X, adulto).
 
-% Baixo tempo de preparo: paleolitica exige preparo integral de tudo
-exclui(paleolitica, tempo_preparo, baixa).
+evidencia(hiperproteica, X, 0.30) :- tem_objetivo(X, ganho_massa).
+evidencia(hiperproteica, X, 0.20) :- tem_objetivo(X, performance_atletica).
+evidencia(hiperproteica, X, 0.20) :- tem_nivel_atividade(X, intenso).
+evidencia(hiperproteica, X, 0.05) :- tem_nivel_atividade(X, moderado).
+evidencia(hiperproteica, X, 0.08) :- nao_tem_restricao(X, carne).
+evidencia(hiperproteica, X, 0.08) :- tem_imc_faixa(X, abaixo_peso).
+evidencia(hiperproteica, X, 0.05) :- tem_imc_faixa(X, normal).
+evidencia(hiperproteica, X, 0.08) :- tem_faixa_etaria(X, jovem).
+evidencia(hiperproteica, X, 0.05) :- tem_faixa_etaria(X, adulto).
+evidencia(hiperproteica, X, 0.05) :- tem_frequencia_carne(X, diariamente).
 
-% Orcamento baixo: paleolitica exige carnes, sementes e alimentos organicos de custo alto
-exclui(paleolitica, orcamento, baixo).
+evidencia(low_fat, X, 0.10) :- tem_objetivo(X, perda_peso).
+evidencia(low_fat, X, 0.10) :- tem_objetivo(X, saude_geral).
+evidencia(low_fat, X, 0.08) :- tem_objetivo(X, controle_cronicas).
+evidencia(low_fat, X, 0.20) :- tem_doenca(X, colesterol_alto).
+evidencia(low_fat, X, 0.10) :- tem_doenca(X, hipertensao).
+evidencia(low_fat, X, 0.15) :- tem_doenca(X, doenca_cardiaca).
+evidencia(low_fat, X, 0.05) :- tem_nivel_atividade(X, sedentario).
+evidencia(low_fat, X, 0.05) :- tem_nivel_atividade(X, leve).
+evidencia(low_fat, X, 0.10) :- tem_faixa_etaria(X, idoso).
+evidencia(low_fat, X, 0.05) :- tem_imc_faixa(X, sobrepeso).
+evidencia(low_fat, X, 0.08) :- tem_imc_faixa(X, obesidade).
 
-% Objetivo ganho de massa: low fat impossibilita superavit calorico limpo
-exclui(low_fat, objetivo, ganho_massa).
+evidencia(sem_gluten, X, 0.50) :- tem_restricao(X, gluten).
+evidencia(sem_gluten, X, 0.05) :- tem_objetivo(X, saude_geral).
 
-% Objetivo ganho de massa: sem_gluten sozinha nao atende demanda proteica de ganho
-exclui(sem_gluten, objetivo, ganho_massa).
+evidencia(dash, X, 0.30) :- tem_doenca(X, hipertensao).
+evidencia(dash, X, 0.20) :- tem_objetivo(X, controle_cronicas).
+evidencia(dash, X, 0.08) :- tem_objetivo(X, saude_geral).
+evidencia(dash, X, 0.05) :- nao_tem_restricao(X, carne).
+evidencia(dash, X, 0.10) :- tem_doenca(X, colesterol_alto).
+evidencia(dash, X, 0.12) :- tem_doenca(X, doenca_cardiaca).
+evidencia(dash, X, 0.10) :- tem_faixa_etaria(X, idoso).
+evidencia(dash, X, 0.05) :- tem_faixa_etaria(X, adulto).
+evidencia(dash, X, 0.05) :- tem_nivel_atividade(X, sedentario).
+evidencia(dash, X, 0.05) :- tem_nivel_atividade(X, leve).
+evidencia(dash, X, 0.05) :- tem_orcamento(X, flexivel).
 
-% Doenca cardiaca: low fat e a preferencia; cetogenica ja esta excluida acima
-% Problemas renais: excluir tambem dieta paleolitica (alta proteina animal)
-exclui(paleolitica, tem_problemas_renais, sim).
+evidencia(cetogenica, X, 0.15) :- tem_objetivo(X, perda_peso).
+evidencia(cetogenica, X, 0.15) :- tem_doenca(X, diabetes).
+evidencia(cetogenica, X, 0.15) :- tem_tipo_diabetes(X, tipo_2).
+evidencia(cetogenica, X, 0.10) :- tem_tipo_diabetes(X, pre_diabetes).
+evidencia(cetogenica, X, 0.28) :- tem_disposicao_restricao(X, sim).
+evidencia(cetogenica, X, 0.08) :- tem_orcamento(X, alto).
+evidencia(cetogenica, X, 0.12) :- tem_imc_faixa(X, obesidade).
+evidencia(cetogenica, X, 0.05) :- tem_nivel_atividade(X, sedentario).
 
-% Diabetes tipo 1: cetogenica de alto risco sem supervisao medica intensiva
-exclui(cetogenica, tipo_diabetes, tipo_1).
+evidencia(paleolitica, X, 0.15) :- tem_objetivo(X, saude_geral).
+evidencia(paleolitica, X, 0.12) :- tem_objetivo(X, performance_atletica).
+evidencia(paleolitica, X, 0.15) :- tem_restricao(X, gluten).
+evidencia(paleolitica, X, 0.10) :- tem_orcamento(X, alto).
+evidencia(paleolitica, X, 0.05) :- tem_orcamento(X, flexivel).
+evidencia(paleolitica, X, 0.10) :- tem_nivel_atividade(X, intenso).
+evidencia(paleolitica, X, 0.05) :- tem_nivel_atividade(X, moderado).
+evidencia(paleolitica, X, 0.05) :- nao_tem_restricao(X, carne).
+evidencia(paleolitica, X, 0.08) :- tem_faixa_etaria(X, jovem).
+evidencia(paleolitica, X, 0.05) :- tem_faixa_etaria(X, adulto).
 
-% Idoso sedentario nao deve seguir hiperproteica sem supervisao (excesso pode lesar rins)
-% (retirado — excessivamente restritivo para um sistema generico)
+evidencia(flexitariana, X, 0.05) :- nao_tem_restricao(X, carne).
+evidencia(flexitariana, X, 0.25) :- tem_frequencia_carne(X, ocasionalmente).
+evidencia(flexitariana, X, 0.30) :- tem_frequencia_carne(X, raramente).
+evidencia(flexitariana, X, 0.12) :- tem_objetivo(X, saude_geral).
+evidencia(flexitariana, X, 0.08) :- tem_objetivo(X, controle_cronicas).
+evidencia(flexitariana, X, 0.05) :- tem_faixa_etaria(X, jovem).
+evidencia(flexitariana, X, 0.05) :- tem_faixa_etaria(X, adulto).
+evidencia(flexitariana, X, 0.05) :- tem_nivel_atividade(X, moderado).
+evidencia(flexitariana, X, 0.05) :- tem_doenca(X, colesterol_alto).
+evidencia(flexitariana, X, 0.05) :- tem_orcamento(X, flexivel).
+evidencia(flexitariana, X, 0.05) :- tem_orcamento(X, baixo).
 
-% Orcamento baixo: mediterranea ja excluida acima; adicionar paleolitica acima
+% CONTRAINDICACOES ESTRITAS -----------------------------------------------------
+% contraindicada(Dieta, X) :- Condicao(X, Valor).
+
+contraindicada(hiperproteica, X) :- tem_restricao(X, carne).
+contraindicada(hiperproteica, X) :- tem_doenca(X, problemas_renais).
+contraindicada(vegetariana, X)   :- tem_restricao(X, laticinios).
+contraindicada(cetogenica, X)    :- tem_disposicao_restricao(X, nao).
+contraindicada(cetogenica, X)    :- tem_doenca(X, colesterol_alto).
+contraindicada(cetogenica, X)    :- tem_doenca(X, doenca_cardiaca).
+contraindicada(mediterranea, X)  :- tem_tempo_preparo(X, baixa).
+contraindicada(mediterranea, X)  :- tem_orcamento(X, baixo).
+contraindicada(vegana, X)        :- tem_tempo_preparo(X, baixa).
+contraindicada(paleolitica, X)   :- tem_tempo_preparo(X, baixa).
+contraindicada(paleolitica, X)   :- tem_orcamento(X, baixo).
+contraindicada(low_fat, X)       :- tem_objetivo(X, ganho_massa).
+contraindicada(sem_gluten, X)    :- tem_objetivo(X, ganho_massa).
+contraindicada(paleolitica, X)   :- tem_doenca(X, problemas_renais).
+contraindicada(cetogenica, X)    :- tem_tipo_diabetes(X, tipo_1).
