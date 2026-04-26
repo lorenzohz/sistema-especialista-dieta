@@ -11,7 +11,7 @@ SWI-Prolog instalado: https://www.swi-prolog.org/Download.html
 
 ### Executar o Sistema Principal
 ```bash
-swipl -g "consult('interface.pl'), menu, halt."
+swipl main.pl
 ```
 Ou dentro do interpretador:
 ```prolog

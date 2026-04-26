@@ -134,49 +134,115 @@ pergunta(ja_tentou_dietas_sem_sucesso,
 :- consult('motor.pl').
 
 % ==============================================================
+%  AUXILIARES DE LEITURA DE LINHA
+%  Substituem read/1 para que o usuario nao precise digitar '.'
+% ==============================================================
+
+% Le uma linha e converte para inteiro (para opcoes de menu)
+ler_opcao(N) :-
+    read_line_to_string(user_input, Linha),
+    (number_string(N, Linha) -> true ; N = -1).
+
+% Le uma linha e devolve sim ou nao (com loop de validacao)
+ler_sim_nao(Resp) :-
+    read_line_to_string(user_input, Linha),
+    string_lower(Linha, Lower),
+    (   Lower = "sim" -> Resp = sim
+    ;   Lower = "nao" -> Resp = nao
+    ;   Resp = invalido
+    ).
+
+% Le uma linha e devolve um atom (para IDs, nomes, categorias)
+ler_atom(Atom) :-
+    read_line_to_string(user_input, Linha),
+    atom_string(Atom, Linha).
+
+% Le uma linha e devolve numero (inteiro ou float)
+ler_numero(N) :-
+    read_line_to_string(user_input, Linha),
+    (number_string(N, Linha) -> true ; N = invalido).
+
+% ==============================================================
 %  NUCLEO DA ENTREVISTA
 % ==============================================================
 
+% Todos os objetivos possiveis, em ordem de exibicao
+objetivo_opcao(1, objetivo_emagrecer,             'Perder peso (emagrecer)').
+objetivo_opcao(2, objetivo_ganho_muscular,        'Ganhar massa muscular').
+objetivo_opcao(3, objetivo_ganhar_peso,           'Ganhar peso (estou abaixo do peso desejado)').
+objetivo_opcao(4, objetivo_manutencao_peso,       'Manter o peso atual').
+objetivo_opcao(5, objetivo_saude_cardiovascular,  'Melhorar a saude do coracao e sistema cardiovascular').
+objetivo_opcao(6, objetivo_saude_geral,           'Melhorar a saude e bem-estar geral, sem objetivo especifico de peso').
+
+%
+% Exibe menu numerado de objetivos, le a escolha do usuario
+% e registra sim para o escolhido e nao para todos os demais.
+%
+perguntar_objetivo :-
+    nl,
+    writeln('------------------------------------------------------------'),
+    writeln(' Qual e o seu principal objetivo?'),
+    writeln('------------------------------------------------------------'),
+    forall(
+        objetivo_opcao(N, _, Descricao),
+        (write('  '), write(N), write('. '), writeln(Descricao))
+    ),
+    nl,
+    write('>> Digite o numero correspondente: '),
+    ler_numero(Escolha),
+    (
+        (integer(Escolha), objetivo_opcao(Escolha, IdEscolhido, _)) ->
+            assertz(resposta(IdEscolhido, sim)),
+            forall(
+                (objetivo_opcao(_, IdOutro, _), IdOutro \= IdEscolhido),
+                assertz(resposta(IdOutro, nao))
+            )
+        ;
+            writeln('   Opcao invalida. Tente novamente.'),
+            perguntar_objetivo
+    ).
+
 realizar_entrevista :-
-    perguntar_sintomas_obrigatorios,
-    perguntar_sintomas_opcionais_relevantes.
+    perguntar_objetivo,
+    perguntar_criterios_obrigatorios,
+    perguntar_criterios_opcionais_relevantes.
 
-perguntar_sintomas_obrigatorios :-
+perguntar_criterios_obrigatorios :-
     forall(
-        sintoma_obrigatorio_nao_respondido(Sintoma),
+        criterio_obrigatorio_pendente(Sintoma),
         (
             pergunta(Sintoma, Texto),
-            perguntar_sintoma(Sintoma, Texto)
+            perguntar_criterio(Sintoma, Texto)
         )
     ).
 
-perguntar_sintomas_opcionais_relevantes :-
+perguntar_criterios_opcionais_relevantes :-
     forall(
-        sintoma_opcional_relevante(Sintoma),
+        criterio_opcional_relevante(Sintoma),
         (
             pergunta(Sintoma, Texto),
-            perguntar_sintoma(Sintoma, Texto)
+            perguntar_criterio(Sintoma, Texto)
         )
     ).
 
-perguntar_sintoma(Sintoma, Texto) :-
+perguntar_criterio(Sintoma, Texto) :-
     nl,
     write('>> '), writeln(Texto),
-    writeln('   Digite: sim. ou nao.'),
-    read(Resposta),
+    writeln('   Digite: sim ou nao'),
+    ler_sim_nao(Resposta),
     (
         (Resposta = sim ; Resposta = nao) ->
             assertz(resposta(Sintoma, Resposta))
     ;
         writeln('   Resposta invalida. Digite sim. ou nao.'),
-        perguntar_sintoma(Sintoma, Texto)
+        perguntar_criterio(Sintoma, Texto)
     ).
 
 % ==============================================================
 %  INICIO E EXIBICAO DO DIAGNOSTICO
 % ==============================================================
 
-iniciar_diagnostico :-
+iniciar_consulta :-
     nl,
     writeln('============================================================'),
     writeln(' SISTEMA ESPECIALISTA DE RECOMENDACAO DE DIETA'),
@@ -186,7 +252,8 @@ iniciar_diagnostico :-
     writeln(' ou recomendacao correta e precisa.'),
     writeln('============================================================'),
     nl,
-    writeln('Responda as perguntas a seguir sobre seu perfil e objetivos.'),
+    writeln('Primeiro escolha seu objetivo principal; em seguida'),
+    writeln('responda as perguntas sobre seu perfil de saude e habitos.'),
     retractall(resposta(_, _)),
     realizar_entrevista,
     diagnostico(Resultados),
@@ -210,7 +277,7 @@ mostrar_resultados(Resultados) :-
 mostrar_lista_resultados([]).
 
 mostrar_lista_resultados([Prob-Hipotese | Resto]) :-
-    hipotese(Hipotese, Nome, Categoria, _, Descricao),
+    plano(Hipotese, Nome, Categoria, _, Descricao),
     Percentual is round(Prob * 100),
 
     nl,
@@ -221,7 +288,7 @@ mostrar_lista_resultados([Prob-Hipotese | Resto]) :-
     nl,
     write(' Descricao: '), writeln(Descricao),
 
-    explicar_hipotese(Hipotese),
+    explicar_plano(Hipotese),
 
     nl,
     writeln(' Recomendacoes:'),
@@ -250,11 +317,11 @@ menu_explicacoes :-
     writeln(' (2) Por que uma pergunta foi feita?'),
     writeln(' (3) Voltar ao menu principal'),
     writeln('------------------------------------------------------------'),
-    read(Opcao),
+    write('Opcao: '), ler_opcao(Opcao),
     executar_explicacao(Opcao).
 
 executar_explicacao(1) :-
-    explicar_hipotese_descartada,
+    explicar_plano_descartado,
     menu_explicacoes.
 
 executar_explicacao(2) :-
@@ -272,8 +339,8 @@ executar_explicacao(_) :-
 explicar_sintoma :-
     nl,
     listar_perguntas_feitas,
-    writeln('Digite o ID da pergunta (ex: objetivo_emagrecer.):'),
-    read(IdPergunta),
+    writeln('Digite o ID da pergunta (ex: objetivo_emagrecer):'),
+    write('> '), ler_atom(IdPergunta),
     (
         resposta(IdPergunta, _) ->
             explicar_pergunta(IdPergunta)
@@ -281,27 +348,27 @@ explicar_sintoma :-
         writeln('Essa pergunta nao foi feita durante o diagnostico.')
     ).
 
-explicar_hipotese_descartada :-
+explicar_plano_descartado :-
     nl,
-    writeln('IDs de hipoteses disponiveis:'),
-    listar_ids_hipoteses,
-    writeln('Digite o ID da hipotese (ex: dieta_low_carb.):'),
-    read(Hipotese),
+    writeln('IDs de planos disponiveis:'),
+    listar_ids_planos,
+    writeln('Digite o ID do plano (ex: dieta_low_carb):'),
+    write('> '), ler_atom(Hipotese),
     (
-        hipotese_descartada(Hipotese) ->
+        plano_descartado(Hipotese) ->
             explicar_descarte(Hipotese)
     ;
         (
-            hipotese(Hipotese, _, _, _, _) ->
-                writeln('Essa hipotese nao foi descartada (pode ter sido recomendada ou nao avaliada).')
+            plano(Hipotese, _, _, _, _) ->
+                writeln('Esse plano nao foi descartado (pode ter sido recomendado ou nao avaliado).')
         ;
-            writeln('ID de hipotese nao encontrado.')
+            writeln('ID de plano nao encontrado.')
         )
     ).
 
-listar_ids_hipoteses :-
+listar_ids_planos :-
     forall(
-        hipotese(Id, Nome, _, _, _),
+        plano(Id, Nome, _, _, _),
         (
             write('  - '), write(Id), write(' ('), write(Nome), writeln(')')
         )
@@ -330,14 +397,14 @@ menu :-
     writeln(' Introducao a Inteligencia Artificial - UEM'),
     writeln('============================================================'),
     writeln(' (1) Iniciar avaliacao e obter recomendacao'),
-    writeln(' (2) Gerenciar hipoteses (CRUD)'),
+    writeln(' (2) Gerenciar planos de dieta (CRUD)'),
     writeln(' (3) Sair'),
     writeln('------------------------------------------------------------'),
-    read(Opcao),
+    write('Opcao: '), ler_opcao(Opcao),
     executar_opcao(Opcao).
 
 executar_opcao(1) :-
-    iniciar_diagnostico,
+    iniciar_consulta,
     menu.
 
 executar_opcao(2) :-
@@ -359,13 +426,13 @@ menu_crud :-
     writeln('============================================================'),
     writeln(' GERENCIAMENTO DE HIPOTESES (CRUD)'),
     writeln('============================================================'),
-    writeln(' (1) Consultar / Listar hipoteses'),
-    writeln(' (2) Incluir nova hipotese'),
-    writeln(' (3) Alterar hipotese existente'),
-    writeln(' (4) Excluir hipotese'),
+    writeln(' (1) Consultar / Listar planos'),
+    writeln(' (2) Incluir novo plano'),
+    writeln(' (3) Alterar plano existente'),
+    writeln(' (4) Excluir plano'),
     writeln(' (5) Voltar ao menu principal'),
     writeln('------------------------------------------------------------'),
-    read(Opcao),
+    write('Opcao: '), ler_opcao(Opcao),
     executar_crud(Opcao).
 
 % (1) Consultar
@@ -374,22 +441,22 @@ executar_crud(1) :-
     writeln('=== LISTA DE HIPOTESES CADASTRADAS ==='),
     findall(
         Id-Nome-Categoria-Prob,
-        hipotese(Id, Nome, Categoria, Prob, _),
+        plano(Id, Nome, Categoria, Prob, _),
         Lista
     ),
-    mostrar_hipoteses_numeradas(Lista, 1),
+    mostrar_planos_numerados(Lista, 1),
     menu_crud.
 
 % (2) Incluir
 executar_crud(2) :-
     nl,
     writeln('--- INCLUIR NOVA HIPOTESE ---'),
-    write('ID (atom, ex: dieta_nova.): '), read(Id),
-    write('Nome: '), read(Nome),
-    write('Categoria: '), read(Categoria),
-    write('Probabilidade base (0.0 a 1.0): '), read(Prob),
-    write('Descricao: '), read(Desc),
-    assertz(hipotese(Id, Nome, Categoria, Prob, Desc)),
+    write('ID (atom, ex: dieta_nova): '), ler_atom(Id),
+    write('Nome: '), ler_atom(Nome),
+    write('Categoria: '), ler_atom(Categoria),
+    write('Probabilidade base (0.0 a 1.0): '), ler_numero(Prob),
+    write('Descricao: '), ler_atom(Desc),
+    assertz(plano(Id, Nome, Categoria, Prob, Desc)),
     writeln('Hipotese incluida com sucesso!'),
     menu_crud.
 
@@ -397,16 +464,16 @@ executar_crud(2) :-
 executar_crud(3) :-
     nl,
     writeln('--- ALTERAR HIPOTESE ---'),
-    listar_ids_hipoteses,
-    write('Digite o ID da hipotese a alterar: '), read(Id),
+    listar_ids_planos,
+    write('Digite o ID do plano a alterar: '), ler_atom(Id),
     (
-        hipotese(Id, _, _, _, _) ->
-            write('Novo nome: '), read(NovoNome),
-            write('Nova categoria: '), read(NovaCategoria),
-            write('Nova probabilidade (0.0 a 1.0): '), read(NovaProbabilidade),
-            write('Nova descricao: '), read(NovaDescricao),
-            retractall(hipotese(Id, _, _, _, _)),
-            assertz(hipotese(Id, NovoNome, NovaCategoria, NovaProbabilidade, NovaDescricao)),
+        plano(Id, _, _, _, _) ->
+            write('Novo nome: '), ler_atom(NovoNome),
+            write('Nova categoria: '), ler_atom(NovaCategoria),
+            write('Nova probabilidade (0.0 a 1.0): '), ler_numero(NovaProbabilidade),
+            write('Nova descricao: '), ler_atom(NovaDescricao),
+            retractall(plano(Id, _, _, _, _)),
+            assertz(plano(Id, NovoNome, NovaCategoria, NovaProbabilidade, NovaDescricao)),
             writeln('Hipotese alterada com sucesso!')
     ;
         writeln('Erro: ID nao encontrado.')
@@ -417,13 +484,13 @@ executar_crud(3) :-
 executar_crud(4) :-
     nl,
     writeln('--- EXCLUIR HIPOTESE ---'),
-    listar_ids_hipoteses,
-    write('Digite o ID da hipotese a excluir: '), read(Id),
+    listar_ids_planos,
+    write('Digite o ID do plano a excluir: '), ler_atom(Id),
     (
-        hipotese(Id, _, _, _, _) ->
-            retractall(hipotese(Id, _, _, _, _)),
-            retractall(sintoma_obrigatorio(Id, _)),
-            retractall(sintoma_opcional(Id, _)),
+        plano(Id, _, _, _, _) ->
+            retractall(plano(Id, _, _, _, _)),
+            retractall(criterio_obrigatorio(Id, _)),
+            retractall(criterio_opcional(Id, _)),
             retractall(recomendacao(Id, _, _)),
             writeln('Hipotese e seus dados removidos com sucesso!')
     ;
@@ -440,8 +507,8 @@ executar_crud(_) :-
     menu_crud.
 
 % Auxiliar de listagem
-mostrar_hipoteses_numeradas([], _).
-mostrar_hipoteses_numeradas([Id-Nome-Categoria-Prob | Resto], N) :-
+mostrar_planos_numerados([], _).
+mostrar_planos_numerados([Id-Nome-Categoria-Prob | Resto], N) :-
     Pct is Prob * 100,
     nl,
     write(N), writeln(')'),
@@ -450,4 +517,4 @@ mostrar_hipoteses_numeradas([Id-Nome-Categoria-Prob | Resto], N) :-
     write('   Categoria: '), writeln(Categoria),
     write('   Prob. base: '), write(Pct), writeln('%'),
     N1 is N + 1,
-    mostrar_hipoteses_numeradas(Resto, N1).
+    mostrar_planos_numerados(Resto, N1).

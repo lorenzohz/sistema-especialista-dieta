@@ -1,29 +1,29 @@
-:- dynamic hipotese/5.
+:- dynamic plano/5.
 :- dynamic recomendacao/3.
-:- dynamic sintoma_obrigatorio/2.
-:- dynamic sintoma_opcional/2.
+:- dynamic criterio_obrigatorio/2.
+:- dynamic criterio_opcional/2.
 
 % Formato:
-%% hipotese(+Id, +Nome, +Categoria, +Probabilidade, +Descricao)
+%% plano(+Id, +Nome, +Categoria, +Probabilidade, +Descricao)
 %%
 %% A probabilidade base varia de 0.0 a 1.0.
 %% O calculo final e: ProbBase + Bonus, onde
-%% Bonus = (opcionais_confirmados / total_opcionais) * 0.10
-%% Isso significa que os sintomas/condicoes opcionais podem
+%% Bonus = (opcionais_confirmados / total_criterios_opcionais) * 0.10
+%% Isso significa que os criterios opcionais podem
 %% aumentar em ate 10% a probabilidade da recomendacao.
 
 % ==============================================================
 % CATEGORIA: Emagrecimento
 % ==============================================================
 
-hipotese(dieta_low_carb,
+plano(dieta_low_carb,
     'Dieta Low-Carb / Cetogenica',
     emagrecimento,
     0.88,
     'Restricao de carboidratos para induzir cetose ou reducao calorica significativa. Indicada para perda de peso rapida e controle glicemico.'
 ).
 
-hipotese(dieta_emagrecimento_moderado,
+plano(dieta_emagrecimento_moderado,
     'Dieta Hipocalorica Equilibrada',
     emagrecimento,
     0.85,
@@ -34,14 +34,14 @@ hipotese(dieta_emagrecimento_moderado,
 % CATEGORIA: Saude Cardiovascular
 % ==============================================================
 
-hipotese(dieta_mediterranea,
+plano(dieta_mediterranea,
     'Dieta Mediterranea',
     saude_cardiovascular,
     0.90,
     'Rica em azeite, frutas, verduras, peixes e graos integrais. Amplamente reconhecida por reduzir riscos cardiovasculares e inflamacao sistemica.'
 ).
 
-hipotese(dieta_dash,
+plano(dieta_dash,
     'Dieta DASH (Controle da Hipertensao)',
     saude_cardiovascular,
     0.92,
@@ -52,14 +52,14 @@ hipotese(dieta_dash,
 % CATEGORIA: Controle Metabolico
 % ==============================================================
 
-hipotese(dieta_diabeticos,
+plano(dieta_diabeticos,
     'Dieta para Controle do Diabetes Tipo 2',
     controle_metabolico,
     0.91,
     'Controle rigoroso do indice glicemico dos alimentos. Prioriza fibras, proteinas magras e gorduras saudaveis para estabilizacao da glicemia.'
 ).
 
-hipotese(dieta_anti_inflamatoria,
+plano(dieta_anti_inflamatoria,
     'Dieta Anti-Inflamatoria',
     controle_metabolico,
     0.83,
@@ -70,14 +70,14 @@ hipotese(dieta_anti_inflamatoria,
 % CATEGORIA: Ganho de Massa / Performance
 % ==============================================================
 
-hipotese(dieta_hiperproteica,
+plano(dieta_hiperproteica,
     'Dieta Hiperproteica para Ganho Muscular',
     ganho_massa,
     0.89,
     'Elevada ingestao de proteinas (1.6-2.2g por kg de peso corporal) para suportar hipertrofia muscular. Combinada com treinamento de forca.'
 ).
 
-hipotese(dieta_ganho_peso_saudavel,
+plano(dieta_ganho_peso_saudavel,
     'Dieta Hipercalorica Saudavel',
     ganho_massa,
     0.84,
@@ -88,14 +88,14 @@ hipotese(dieta_ganho_peso_saudavel,
 % CATEGORIA: Restricoes Alimentares
 % ==============================================================
 
-hipotese(dieta_vegetariana,
+plano(dieta_vegetariana,
     'Dieta Vegetariana / Vegana',
     restricao_alimentar,
     0.87,
     'Exclusao de carnes (vegetariana) ou de todos os produtos de origem animal (vegana). Requer planejamento cuidadoso para suprir proteinas, B12, ferro e omega-3.'
 ).
 
-hipotese(dieta_sem_gluten,
+plano(dieta_sem_gluten,
     'Dieta Isenta de Gluten',
     restricao_alimentar,
     0.95,
@@ -106,7 +106,7 @@ hipotese(dieta_sem_gluten,
 % CATEGORIA: Manutencao / Bem-estar Geral
 % ==============================================================
 
-hipotese(dieta_equilibrada_manutencao,
+plano(dieta_equilibrada_manutencao,
     'Dieta Equilibrada para Manutencao do Peso',
     manutencao,
     0.82,
@@ -121,42 +121,42 @@ hipotese(dieta_equilibrada_manutencao,
 % ==============================================================
 
 % -- Dieta Low-Carb --
-sintoma_obrigatorio(dieta_low_carb, objetivo_emagrecer).
-sintoma_obrigatorio(dieta_low_carb, aceita_reducao_carboidratos).
+criterio_obrigatorio(dieta_low_carb, objetivo_emagrecer).
+criterio_obrigatorio(dieta_low_carb, aceita_reducao_carboidratos).
 
 % -- Dieta Hipocalorica --
-sintoma_obrigatorio(dieta_emagrecimento_moderado, objetivo_emagrecer).
-sintoma_obrigatorio(dieta_emagrecimento_moderado, sem_restricao_gluten).
+criterio_obrigatorio(dieta_emagrecimento_moderado, objetivo_emagrecer).
+criterio_obrigatorio(dieta_emagrecimento_moderado, sem_restricao_gluten).
 
 % -- Dieta Mediterranea --
-sintoma_obrigatorio(dieta_mediterranea, objetivo_saude_cardiovascular).
-sintoma_obrigatorio(dieta_mediterranea, consome_peixe_ou_frutos_mar).
+criterio_obrigatorio(dieta_mediterranea, objetivo_saude_cardiovascular).
+criterio_obrigatorio(dieta_mediterranea, consome_peixe_ou_frutos_mar).
 
 % -- Dieta DASH --
-sintoma_obrigatorio(dieta_dash, pressao_arterial_alta).
+criterio_obrigatorio(dieta_dash, pressao_arterial_alta).
 
 % -- Dieta Diabeticos --
-sintoma_obrigatorio(dieta_diabeticos, tem_diabetes_tipo2).
+criterio_obrigatorio(dieta_diabeticos, tem_diabetes_tipo2).
 
 % -- Dieta Anti-Inflamatoria --
-sintoma_obrigatorio(dieta_anti_inflamatoria, tem_condicao_inflamatoria).
+criterio_obrigatorio(dieta_anti_inflamatoria, tem_condicao_inflamatoria).
 
 % -- Dieta Hiperproteica --
-sintoma_obrigatorio(dieta_hiperproteica, objetivo_ganho_muscular).
-sintoma_obrigatorio(dieta_hiperproteica, pratica_musculacao_ou_esporte).
+criterio_obrigatorio(dieta_hiperproteica, objetivo_ganho_muscular).
+criterio_obrigatorio(dieta_hiperproteica, pratica_musculacao_ou_esporte).
 
 % -- Dieta Ganho de Peso --
-sintoma_obrigatorio(dieta_ganho_peso_saudavel, objetivo_ganhar_peso).
+criterio_obrigatorio(dieta_ganho_peso_saudavel, objetivo_ganhar_peso).
 
 % -- Dieta Vegetariana --
-sintoma_obrigatorio(dieta_vegetariana, nao_consome_carne).
+criterio_obrigatorio(dieta_vegetariana, nao_consome_carne).
 
 % -- Dieta Sem Gluten --
-sintoma_obrigatorio(dieta_sem_gluten, diagnosticado_celiaco_ou_sensivel_gluten).
+criterio_obrigatorio(dieta_sem_gluten, diagnosticado_celiaco_ou_sensivel_gluten).
 
 % -- Dieta Manutencao --
-sintoma_obrigatorio(dieta_equilibrada_manutencao, objetivo_manutencao_peso).
-sintoma_obrigatorio(dieta_equilibrada_manutencao, sem_condicao_medica_especifica).
+criterio_obrigatorio(dieta_equilibrada_manutencao, objetivo_manutencao_peso).
+criterio_obrigatorio(dieta_equilibrada_manutencao, sem_condicao_medica_especifica).
 
 
 % ==============================================================
@@ -166,74 +166,74 @@ sintoma_obrigatorio(dieta_equilibrada_manutencao, sem_condicao_medica_especifica
 % ==============================================================
 
 % -- Dieta Low-Carb --
-sintoma_opcional(dieta_low_carb, tem_diabetes_tipo2).
-sintoma_opcional(dieta_low_carb, nivel_atividade_sedentario_ou_leve).
-sintoma_opcional(dieta_low_carb, colesterol_alto).
-sintoma_opcional(dieta_low_carb, ja_tentou_dietas_sem_sucesso).
-sintoma_opcional(dieta_low_carb, muito_acima_peso).
+criterio_opcional(dieta_low_carb, tem_diabetes_tipo2).
+criterio_opcional(dieta_low_carb, nivel_atividade_sedentario_ou_leve).
+criterio_opcional(dieta_low_carb, colesterol_alto).
+criterio_opcional(dieta_low_carb, ja_tentou_dietas_sem_sucesso).
+criterio_opcional(dieta_low_carb, muito_acima_peso).
 
 % -- Dieta Hipocalorica --
-sintoma_opcional(dieta_emagrecimento_moderado, nivel_atividade_moderada).
-sintoma_opcional(dieta_emagrecimento_moderado, historico_de_dietas_yo_yo).
-sintoma_opcional(dieta_emagrecimento_moderado, prefere_variedade_alimentar).
-sintoma_opcional(dieta_emagrecimento_moderado, sem_condicao_medica_especifica).
-sintoma_opcional(dieta_emagrecimento_moderado, pouco_acima_peso).
+criterio_opcional(dieta_emagrecimento_moderado, nivel_atividade_moderada).
+criterio_opcional(dieta_emagrecimento_moderado, historico_de_dietas_yo_yo).
+criterio_opcional(dieta_emagrecimento_moderado, prefere_variedade_alimentar).
+criterio_opcional(dieta_emagrecimento_moderado, sem_condicao_medica_especifica).
+criterio_opcional(dieta_emagrecimento_moderado, pouco_acima_peso).
 
 % -- Dieta Mediterranea --
-sintoma_opcional(dieta_mediterranea, colesterol_alto).
-sintoma_opcional(dieta_mediterranea, nivel_atividade_moderada).
-sintoma_opcional(dieta_mediterranea, nao_tem_diabetes_tipo2).
-sintoma_opcional(dieta_mediterranea, pressao_arterial_normal).
-sintoma_opcional(dieta_mediterranea, prefere_variedade_alimentar).
+criterio_opcional(dieta_mediterranea, colesterol_alto).
+criterio_opcional(dieta_mediterranea, nivel_atividade_moderada).
+criterio_opcional(dieta_mediterranea, nao_tem_diabetes_tipo2).
+criterio_opcional(dieta_mediterranea, pressao_arterial_normal).
+criterio_opcional(dieta_mediterranea, prefere_variedade_alimentar).
 
 % -- Dieta DASH --
-sintoma_opcional(dieta_dash, colesterol_alto).
-sintoma_opcional(dieta_dash, objetivo_emagrecer).
-sintoma_opcional(dieta_dash, consome_muito_sodio_atualmente).
-sintoma_opcional(dieta_dash, historico_familiar_doenca_cardiaca).
-sintoma_opcional(dieta_dash, nivel_atividade_sedentario_ou_leve).
+criterio_opcional(dieta_dash, colesterol_alto).
+criterio_opcional(dieta_dash, objetivo_emagrecer).
+criterio_opcional(dieta_dash, consome_muito_sodio_atualmente).
+criterio_opcional(dieta_dash, historico_familiar_doenca_cardiaca).
+criterio_opcional(dieta_dash, nivel_atividade_sedentario_ou_leve).
 
 % -- Dieta Diabeticos --
-sintoma_opcional(dieta_diabeticos, objetivo_emagrecer).
-sintoma_opcional(dieta_diabeticos, nivel_atividade_sedentario_ou_leve).
-sintoma_opcional(dieta_diabeticos, colesterol_alto).
-sintoma_opcional(dieta_diabeticos, pressao_arterial_alta).
-sintoma_opcional(dieta_diabeticos, historico_familiar_diabetes).
+criterio_opcional(dieta_diabeticos, objetivo_emagrecer).
+criterio_opcional(dieta_diabeticos, nivel_atividade_sedentario_ou_leve).
+criterio_opcional(dieta_diabeticos, colesterol_alto).
+criterio_opcional(dieta_diabeticos, pressao_arterial_alta).
+criterio_opcional(dieta_diabeticos, historico_familiar_diabetes).
 
 % -- Dieta Anti-Inflamatoria --
-sintoma_opcional(dieta_anti_inflamatoria, consome_peixe_ou_frutos_mar).
-sintoma_opcional(dieta_anti_inflamatoria, colesterol_alto).
-sintoma_opcional(dieta_anti_inflamatoria, objetivo_saude_cardiovascular).
-sintoma_opcional(dieta_anti_inflamatoria, tem_diabetes_tipo2).
+criterio_opcional(dieta_anti_inflamatoria, consome_peixe_ou_frutos_mar).
+criterio_opcional(dieta_anti_inflamatoria, colesterol_alto).
+criterio_opcional(dieta_anti_inflamatoria, objetivo_saude_cardiovascular).
+criterio_opcional(dieta_anti_inflamatoria, tem_diabetes_tipo2).
 
 % -- Dieta Hiperproteica --
-sintoma_opcional(dieta_hiperproteica, nivel_atividade_alta).
-sintoma_opcional(dieta_hiperproteica, nao_tem_problema_renal).
-sintoma_opcional(dieta_hiperproteica, objetivo_emagrecer).
-sintoma_opcional(dieta_hiperproteica, consome_carne_e_ovos).
+criterio_opcional(dieta_hiperproteica, nivel_atividade_alta).
+criterio_opcional(dieta_hiperproteica, nao_tem_problema_renal).
+criterio_opcional(dieta_hiperproteica, objetivo_emagrecer).
+criterio_opcional(dieta_hiperproteica, consome_carne_e_ovos).
 
 % -- Dieta Ganho de Peso --
-sintoma_opcional(dieta_ganho_peso_saudavel, pratica_musculacao_ou_esporte).
-sintoma_opcional(dieta_ganho_peso_saudavel, nivel_atividade_alta).
-sintoma_opcional(dieta_ganho_peso_saudavel, metabolismo_acelerado_ou_dificuldade_ganho).
-sintoma_opcional(dieta_ganho_peso_saudavel, objetivo_ganho_muscular).
+criterio_opcional(dieta_ganho_peso_saudavel, pratica_musculacao_ou_esporte).
+criterio_opcional(dieta_ganho_peso_saudavel, nivel_atividade_alta).
+criterio_opcional(dieta_ganho_peso_saudavel, metabolismo_acelerado_ou_dificuldade_ganho).
+criterio_opcional(dieta_ganho_peso_saudavel, objetivo_ganho_muscular).
 
 % -- Dieta Vegetariana --
-sintoma_opcional(dieta_vegetariana, motivacao_etica_ou_ambiental).
-sintoma_opcional(dieta_vegetariana, objetivo_saude_cardiovascular).
-sintoma_opcional(dieta_vegetariana, sem_restricao_gluten).
-sintoma_opcional(dieta_vegetariana, objetivo_emagrecer).
+criterio_opcional(dieta_vegetariana, motivacao_etica_ou_ambiental).
+criterio_opcional(dieta_vegetariana, objetivo_saude_cardiovascular).
+criterio_opcional(dieta_vegetariana, sem_restricao_gluten).
+criterio_opcional(dieta_vegetariana, objetivo_emagrecer).
 
 % -- Dieta Sem Gluten --
-sintoma_opcional(dieta_sem_gluten, tem_condicao_inflamatoria).
-sintoma_opcional(dieta_sem_gluten, sintomas_gastrointestinais_cronicos).
-sintoma_opcional(dieta_sem_gluten, objetivo_saude_geral).
+criterio_opcional(dieta_sem_gluten, tem_condicao_inflamatoria).
+criterio_opcional(dieta_sem_gluten, sintomas_gastrointestinais_cronicos).
+criterio_opcional(dieta_sem_gluten, objetivo_saude_geral).
 
 % -- Dieta Manutencao --
-sintoma_opcional(dieta_equilibrada_manutencao, nivel_atividade_moderada).
-sintoma_opcional(dieta_equilibrada_manutencao, prefere_variedade_alimentar).
-sintoma_opcional(dieta_equilibrada_manutencao, sem_restricao_gluten).
-sintoma_opcional(dieta_equilibrada_manutencao, objetivo_saude_geral).
+criterio_opcional(dieta_equilibrada_manutencao, nivel_atividade_moderada).
+criterio_opcional(dieta_equilibrada_manutencao, prefere_variedade_alimentar).
+criterio_opcional(dieta_equilibrada_manutencao, sem_restricao_gluten).
+criterio_opcional(dieta_equilibrada_manutencao, objetivo_saude_geral).
 
 
 % ==============================================================

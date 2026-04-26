@@ -55,52 +55,52 @@ test_base_conhecimento :-
 
     assert_verdadeiro(
         'Hipotese dieta_low_carb existe na base',
-        hipotese(dieta_low_carb, _, _, _, _)
+        plano(dieta_low_carb, _, _, _, _)
     ),
 
     assert_verdadeiro(
         'Hipotese dieta_mediterranea existe na base',
-        hipotese(dieta_mediterranea, _, _, _, _)
+        plano(dieta_mediterranea, _, _, _, _)
     ),
 
     assert_verdadeiro(
         'Hipotese dieta_dash existe na base',
-        hipotese(dieta_dash, _, _, _, _)
+        plano(dieta_dash, _, _, _, _)
     ),
 
     assert_verdadeiro(
         'Hipotese dieta_diabeticos existe na base',
-        hipotese(dieta_diabeticos, _, _, _, _)
+        plano(dieta_diabeticos, _, _, _, _)
     ),
 
     assert_verdadeiro(
         'Hipotese dieta_vegetariana existe na base',
-        hipotese(dieta_vegetariana, _, _, _, _)
+        plano(dieta_vegetariana, _, _, _, _)
     ),
 
     assert_verdadeiro(
         'Hipotese dieta_sem_gluten existe na base',
-        hipotese(dieta_sem_gluten, _, _, _, _)
+        plano(dieta_sem_gluten, _, _, _, _)
     ),
 
     assert_verdadeiro(
         'dieta_low_carb possui sintoma obrigatorio objetivo_emagrecer',
-        sintoma_obrigatorio(dieta_low_carb, objetivo_emagrecer)
+        criterio_obrigatorio(dieta_low_carb, objetivo_emagrecer)
     ),
 
     assert_verdadeiro(
         'dieta_dash possui sintoma obrigatorio pressao_arterial_alta',
-        sintoma_obrigatorio(dieta_dash, pressao_arterial_alta)
+        criterio_obrigatorio(dieta_dash, pressao_arterial_alta)
     ),
 
     assert_verdadeiro(
         'dieta_vegetariana possui sintoma obrigatorio nao_consome_carne',
-        sintoma_obrigatorio(dieta_vegetariana, nao_consome_carne)
+        criterio_obrigatorio(dieta_vegetariana, nao_consome_carne)
     ),
 
     assert_verdadeiro(
         'dieta_low_carb possui pelo menos 1 sintoma opcional',
-        sintoma_opcional(dieta_low_carb, _)
+        criterio_opcional(dieta_low_carb, _)
     ),
 
     assert_verdadeiro(
@@ -115,12 +115,12 @@ test_base_conhecimento :-
 
     assert_verdadeiro(
         'Probabilidade base de dieta_sem_gluten esta entre 0 e 1',
-        (hipotese(dieta_sem_gluten, _, _, P, _), P > 0.0, P =< 1.0)
+        (plano(dieta_sem_gluten, _, _, P, _), P > 0.0, P =< 1.0)
     ),
 
     assert_verdadeiro(
         'Probabilidade base de dieta_dash esta entre 0 e 1',
-        (hipotese(dieta_dash, _, _, P, _), P > 0.0, P =< 1.0)
+        (plano(dieta_dash, _, _, P, _), P > 0.0, P =< 1.0)
     ).
 
 % --------------------------------------------------------------
@@ -139,6 +139,7 @@ test_diagnostico :-
     assertz(resposta(objetivo_ganho_muscular, nao)),
     assertz(resposta(objetivo_ganhar_peso, nao)),
     assertz(resposta(objetivo_saude_cardiovascular, nao)),
+    assertz(resposta(objetivo_saude_geral, nao)),
     assertz(resposta(pressao_arterial_alta, nao)),
     assertz(resposta(tem_diabetes_tipo2, nao)),
     assertz(resposta(tem_condicao_inflamatoria, nao)),
@@ -162,6 +163,7 @@ test_diagnostico :-
     assertz(resposta(objetivo_ganho_muscular, nao)),
     assertz(resposta(objetivo_ganhar_peso, nao)),
     assertz(resposta(objetivo_saude_cardiovascular, nao)),
+    assertz(resposta(objetivo_saude_geral, nao)),
     assertz(resposta(tem_diabetes_tipo2, nao)),
     assertz(resposta(tem_condicao_inflamatoria, nao)),
     assertz(resposta(diagnosticado_celiaco_ou_sensivel_gluten, nao)),
@@ -181,6 +183,7 @@ test_diagnostico :-
     assertz(resposta(objetivo_ganho_muscular, nao)),
     assertz(resposta(objetivo_ganhar_peso, nao)),
     assertz(resposta(objetivo_saude_cardiovascular, nao)),
+    assertz(resposta(objetivo_saude_geral, nao)),
     assertz(resposta(pressao_arterial_alta, nao)),
     assertz(resposta(tem_diabetes_tipo2, nao)),
     assertz(resposta(tem_condicao_inflamatoria, nao)),
@@ -200,6 +203,7 @@ test_diagnostico :-
     assertz(resposta(objetivo_ganho_muscular, nao)),
     assertz(resposta(objetivo_ganhar_peso, nao)),
     assertz(resposta(objetivo_saude_cardiovascular, nao)),
+    assertz(resposta(objetivo_saude_geral, nao)),
     assertz(resposta(pressao_arterial_alta, nao)),
     assertz(resposta(tem_diabetes_tipo2, nao)),
     assertz(resposta(tem_condicao_inflamatoria, nao)),
@@ -218,6 +222,7 @@ test_diagnostico :-
     assertz(resposta(objetivo_ganho_muscular, nao)),
     assertz(resposta(objetivo_ganhar_peso, nao)),
     assertz(resposta(objetivo_saude_cardiovascular, nao)),
+    assertz(resposta(objetivo_saude_geral, nao)),
     assertz(resposta(pressao_arterial_alta, nao)),
     assertz(resposta(tem_diabetes_tipo2, nao)),
     assertz(resposta(tem_condicao_inflamatoria, nao)),
@@ -301,12 +306,12 @@ test_explicabilidade :-
 
     assert_verdadeiro(
         'dieta_low_carb e descartada quando obrigatorios negados',
-        hipotese_descartada(dieta_low_carb)
+        plano_descartado(dieta_low_carb)
     ),
 
     assert_verdadeiro(
-        'sintoma_que_descartou identifica o sintoma correto',
-        sintoma_que_descartou(dieta_low_carb, objetivo_emagrecer)
+        'criterio_que_descartou identifica o sintoma correto',
+        criterio_que_descartou(dieta_low_carb, objetivo_emagrecer)
     ),
 
     limpar_respostas,
@@ -314,12 +319,12 @@ test_explicabilidade :-
 
     assert_verdadeiro(
         'dieta_dash nao e descartada quando obrigatorio confirmado',
-        \+ hipotese_descartada(dieta_dash)
+        \+ plano_descartado(dieta_dash)
     ),
 
     assert_verdadeiro(
-        'hipotese_possivel valida hipoteses nao descartadas',
-        hipotese_possivel(dieta_dash)
+        'plano_possivel valida planos nao descartados',
+        plano_possivel(dieta_dash)
     ),
 
     assert_verdadeiro(
@@ -327,7 +332,7 @@ test_explicabilidade :-
         (
             findall(
                 Nome,
-                (sintoma_obrigatorio(H, pressao_arterial_alta), hipotese(H, Nome, _, _, _)),
+                (criterio_obrigatorio(H, pressao_arterial_alta), plano(H, Nome, _, _, _)),
                 L
             ),
             L \= []
@@ -343,7 +348,7 @@ test_crud :-
     writeln('=== GRUPO 5: CRUD de Hipoteses ==='),
 
     % Incluir
-    assertz(hipotese(
+    assertz(plano(
         dieta_teste_crud,
         'Dieta de Teste CRUD',
         teste,
@@ -353,37 +358,37 @@ test_crud :-
 
     assert_verdadeiro(
         'CRUD: Hipotese incluida deve ser encontrada na base',
-        hipotese(dieta_teste_crud, 'Dieta de Teste CRUD', teste, 0.75, _)
+        plano(dieta_teste_crud, 'Dieta de Teste CRUD', teste, 0.75, _)
     ),
 
     % Alterar
-    retractall(hipotese(dieta_teste_crud, _, _, _, _)),
-    assertz(hipotese(dieta_teste_crud, 'Dieta Teste Alterada', teste_alt, 0.80, 'Descricao alterada.')),
+    retractall(plano(dieta_teste_crud, _, _, _, _)),
+    assertz(plano(dieta_teste_crud, 'Dieta Teste Alterada', teste_alt, 0.80, 'Descricao alterada.')),
 
     assert_verdadeiro(
         'CRUD: Hipotese alterada deve refletir novo nome',
-        hipotese(dieta_teste_crud, 'Dieta Teste Alterada', _, _, _)
+        plano(dieta_teste_crud, 'Dieta Teste Alterada', _, _, _)
     ),
 
     assert_verdadeiro(
         'CRUD: Hipotese alterada deve refletir nova probabilidade',
-        hipotese(dieta_teste_crud, _, _, 0.80, _)
+        plano(dieta_teste_crud, _, _, 0.80, _)
     ),
 
     assert_falso(
         'CRUD: Hipotese alterada nao deve mais ter nome antigo',
-        hipotese(dieta_teste_crud, 'Dieta de Teste CRUD', _, _, _)
+        plano(dieta_teste_crud, 'Dieta de Teste CRUD', _, _, _)
     ),
 
     % Excluir
-    retractall(hipotese(dieta_teste_crud, _, _, _, _)),
-    retractall(sintoma_obrigatorio(dieta_teste_crud, _)),
-    retractall(sintoma_opcional(dieta_teste_crud, _)),
+    retractall(plano(dieta_teste_crud, _, _, _, _)),
+    retractall(criterio_obrigatorio(dieta_teste_crud, _)),
+    retractall(criterio_opcional(dieta_teste_crud, _)),
     retractall(recomendacao(dieta_teste_crud, _, _)),
 
     assert_falso(
         'CRUD: Hipotese excluida nao deve mais existir na base',
-        hipotese(dieta_teste_crud, _, _, _, _)
+        plano(dieta_teste_crud, _, _, _, _)
     ).
 
 % --------------------------------------------------------------

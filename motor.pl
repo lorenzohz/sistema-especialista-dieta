@@ -3,98 +3,98 @@
 :- dynamic resposta/2.
 
 %
-% Verifica se todos os sintomas/condicoes obrigatorios de uma hipotese foram confirmados
+% Verifica se todos os criterios obrigatorios de um plano foram confirmados
 %
 
-obrigatorios_confirmados(Hipotese) :-
+criterios_obrigatorios_confirmados(Plano) :-
     forall(
-        sintoma_obrigatorio(Hipotese, Sintoma),
-        resposta(Sintoma, sim)
+        criterio_obrigatorio(Plano, Criterio),
+        resposta(Criterio, sim)
     ).
 
 %
-% Verifica se uma hipotese foi descartada (algum obrigatorio negado)
+% Verifica se um plano foi descartado (algum criterio obrigatorio negado)
 %
 
-hipotese_descartada(Hipotese) :-
-    sintoma_obrigatorio(Hipotese, Sintoma),
-    resposta(Sintoma, nao).
+plano_descartado(Plano) :-
+    criterio_obrigatorio(Plano, Criterio),
+    resposta(Criterio, nao).
 
 %
-% Retorna quais condicoes obrigatorias descartaram uma hipotese
+% Retorna quais criterios obrigatorios descartaram um plano
 %
 
-sintoma_que_descartou(Hipotese, Sintoma) :-
-    sintoma_obrigatorio(Hipotese, Sintoma),
-    resposta(Sintoma, nao).
+criterio_que_descartou(Plano, Criterio) :-
+    criterio_obrigatorio(Plano, Criterio),
+    resposta(Criterio, nao).
 
 %
 % Conta quantas condicoes opcionais foram confirmadas
 %
 
-contar_opcionais_confirmados(Hipotese, Quantidade) :-
+contar_criterios_opcionais(Plano, Quantidade) :-
     findall(
-        Sintoma,
+        Criterio,
         (
-            sintoma_opcional(Hipotese, Sintoma),
-            resposta(Sintoma, sim)
+            criterio_opcional(Plano, Criterio),
+            resposta(Criterio, sim)
         ),
         Lista
     ),
     length(Lista, Quantidade).
 
 %
-% Conta o total de condicoes opcionais da hipotese
+% Conta o total de criterios opcionais do plano
 %
 
-total_opcionais(Hipotese, Total) :-
+total_criterios_opcionais(Plano, Total) :-
     findall(
-        Sintoma,
-        sintoma_opcional(Hipotese, Sintoma),
+        Criterio,
+        criterio_opcional(Plano, Criterio),
         Lista
     ),
     length(Lista, Total).
 
 %
-% Hipotese ainda possivel:
+% Plano ainda possivel:
 % nao pode ter nenhuma condicao obrigatoria respondida como nao
 %
 
-hipotese_possivel(Hipotese) :-
-    hipotese(Hipotese, _, _, _, _),
-    \+ hipotese_descartada(Hipotese).
+plano_possivel(Plano) :-
+    plano(Plano, _, _, _, _),
+    \+ plano_descartado(Plano).
 
 %
 % Condicao obrigatoria ainda nao perguntada
 %
 
-sintoma_obrigatorio_nao_respondido(Sintoma) :-
-    sintoma_obrigatorio(_, Sintoma),
-    \+ resposta(Sintoma, _).
+criterio_obrigatorio_pendente(Criterio) :-
+    criterio_obrigatorio(_, Criterio),
+    \+ resposta(Criterio, _).
 
 %
 % Condicao opcional relevante:
-% pertence a uma hipotese ainda possivel
+% pertence a um plano ainda possivel
 % e ainda nao foi respondida
 %
 
-sintoma_opcional_relevante(Sintoma) :-
-    hipotese_possivel(Hipotese),
-    sintoma_opcional(Hipotese, Sintoma),
-    \+ resposta(Sintoma, _).
+criterio_opcional_relevante(Criterio) :-
+    plano_possivel(Plano),
+    criterio_opcional(Plano, Criterio),
+    \+ resposta(Criterio, _).
 
 %
-% Calcula a probabilidade final da hipotese
+% Calcula a probabilidade final do plano
 % Formula: ProbBase + Bonus
-% Bonus = (opcionais_confirmados / total_opcionais) * 0.10
+% Bonus = (opcionais_confirmados / total_criterios_opcionais) * 0.10
 % Isso permite que condicoes opcionais somem ate 10% a mais na probabilidade
 %
 
-probabilidade_final(Hipotese, ProbFinal) :-
-    hipotese(Hipotese, _, _, ProbBase, _),
-    obrigatorios_confirmados(Hipotese),
-    contar_opcionais_confirmados(Hipotese, Confirmados),
-    total_opcionais(Hipotese, Total),
+probabilidade_final(Plano, ProbFinal) :-
+    plano(Plano, _, _, ProbBase, _),
+    criterios_obrigatorios_confirmados(Plano),
+    contar_criterios_opcionais(Plano, Confirmados),
+    total_criterios_opcionais(Plano, Total),
     (
         Total =:= 0 ->
         Bonus = 0
@@ -110,27 +110,27 @@ probabilidade_final(Hipotese, ProbFinal) :-
 
 diagnostico(ResultadosOrdenados) :-
     findall(
-        Prob-Hipotese,
-        probabilidade_final(Hipotese, Prob),
+        Prob-Plano,
+        probabilidade_final(Plano, Prob),
         Resultados
     ),
     sort(1, @>=, Resultados, ResultadosOrdenados).
 
 %
-% Explicabilidade: lista condicoes que confirmaram a hipotese
+% Explicabilidade: lista criterios que confirmaram o plano
 %
 
-explicar_hipotese(Hipotese) :-
-    hipotese(Hipotese, _, _, _, _),
+explicar_plano(Plano) :-
+    plano(Plano, _, _, _, _),
 
     nl,
 
     writeln('Condicoes obrigatorias confirmadas:'),
     forall(
-        sintoma_obrigatorio(Hipotese, S),
+        criterio_obrigatorio(Plano, C),
         (
-            resposta(S, sim),
-            pergunta(S, Texto),
+            resposta(C, sim),
+            pergunta(C, Texto),
             write('  [OK] '), writeln(Texto)
         )
     ),
@@ -139,11 +139,11 @@ explicar_hipotese(Hipotese) :-
 
     writeln('Condicoes opcionais confirmadas:'),
     (
-        (sintoma_opcional(Hipotese, S2), resposta(S2, sim)) ->
+        (criterio_opcional(Plano, C2), resposta(C2, sim)) ->
             forall(
-                (sintoma_opcional(Hipotese, S3), resposta(S3, sim)),
+                (criterio_opcional(Plano, C3), resposta(C3, sim)),
                 (
-                    pergunta(S3, Texto3),
+                    pergunta(C3, Texto3),
                     write('  [+] '), writeln(Texto3)
                 )
             )
@@ -152,22 +152,22 @@ explicar_hipotese(Hipotese) :-
     ).
 
 %
-% Explicabilidade: explica por que uma hipotese foi descartada
+% Explicabilidade: explica por que um plano foi descartado
 %
 
-explicar_descarte(Hipotese) :-
-    hipotese(Hipotese, Nome, _, _, _),
-    hipotese_descartada(Hipotese),
+explicar_descarte(Plano) :-
+    plano(Plano, Nome, _, _, _),
+    plano_descartado(Plano),
 
     nl,
-    write('Hipotese descartada: '), writeln(Nome),
+    write('Plano descartado: '), writeln(Nome),
 
     writeln('Motivo: a(s) seguinte(s) condicao(oes) foram negadas:'),
 
     forall(
-        sintoma_que_descartou(Hipotese, S),
+        criterio_que_descartou(Plano, C),
         (
-            pergunta(S, Texto),
+            pergunta(C, Texto),
             write('  [X] '), writeln(Texto)
         )
     ).
@@ -176,8 +176,8 @@ explicar_descarte(Hipotese) :-
 % Explicabilidade: explica por que uma pergunta foi feita
 %
 
-explicar_pergunta(Sintoma) :-
-    pergunta(Sintoma, Texto),
+explicar_pergunta(Criterio) :-
+    pergunta(Criterio, Texto),
 
     nl,
     write('Pergunta: '), writeln(Texto),
@@ -185,17 +185,17 @@ explicar_pergunta(Sintoma) :-
     findall(
         Nome,
         (
-            (sintoma_obrigatorio(H, Sintoma)
+            (criterio_obrigatorio(H, Criterio)
             ;
-             sintoma_opcional(H, Sintoma)),
-            hipotese(H, Nome, _, _, _)
+             criterio_opcional(H, Criterio)),
+            plano(H, Nome, _, _, _)
         ),
         Lista
     ),
 
     (
         Lista \= [] ->
-            writeln('Essa pergunta foi feita porque esta relacionada com as seguintes hipoteses:'),
+            writeln('Essa pergunta foi feita porque esta relacionada com os seguintes planos de dieta:'),
             forall(
                 member(Nome, Lista),
                 (
@@ -203,5 +203,5 @@ explicar_pergunta(Sintoma) :-
                 )
             )
     ;
-        writeln('Nenhuma hipotese relacionada encontrada.')
+        writeln('Nenhum plano relacionado encontrado.')
     ).
