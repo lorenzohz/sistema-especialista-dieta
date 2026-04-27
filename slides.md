@@ -88,7 +88,7 @@ style: |
 # Sistema Especialista de Recomendação de Dieta
 ## Introdução à Inteligência Artificial
 
-**Universidade Estadual de Maringá** — Departamento de Informática
+**Universidade Estadual de Maringá** - Departamento de Informática
 
 * **Professor:** Wagner Igarashi
 * **Alunos:** Caetano Vendrame Mantovani, Lorenzo Henrique Zanetti, Vitor da Rocha Machado
@@ -122,7 +122,7 @@ style: |
 
 ### Entidades principais
 
-* **Dieta**: hipótese a ser confirmada ou descartada — 11 dietas modeladas.
+* **Dieta**: hipótese a ser confirmada ou descartada (11 dietas modeladas).
 * **Paciente**: indivíduo com perfil dinâmico de atributos.
 * **Evidência**: condição que favorece uma dieta (peso heurístico).
 * **Contraindicação**: condição que exclui uma dieta por razão clínica estrita.
@@ -167,7 +167,7 @@ Onde:
 | vegetariana | Vegetariana | 0.50 | Exclui carnes, permite laticínios e ovos. Rica em fibras. |
 | vegana | Vegana | 0.45 | Exclusivamente vegetal; exige suplementação de B12. |
 | mediterranea | Mediterrânea | 0.55 | Alimentos frescos, azeite, peixes. Forte evidência cardiovascular e metabólica. |
-| hiperproteica | Hiperproteica | 0.50 | Alta proteína (1.6–2.2 g/kg); indicada para hipertrofia e prevenção de sarcopenia. |
+| hiperproteica | Hiperproteica | 0.50 | Alta proteína (1.6-2.2 g/kg); indicada para hipertrofia e prevenção de sarcopenia. |
 
 ---
 
@@ -236,8 +236,8 @@ Parte de **fatos conhecidos** e deriva novas conclusões.
 
 O sistema opera em **duas fases complementares**:
 
-1. **Coleta de fatos** — conduzida por **encadeamento para frente**: respostas do usuário disparam novas perguntas condicionais até o perfil estar completo.
-2. **Inferência de recomendações** — conduzida por **encadeamento para trás**: o motor parte das hipóteses (dietas) e consulta o perfil para calcular scores e contraindicações.
+1. **Coleta de fatos** conduzida por **encadeamento para frente**: respostas do usuário disparam novas perguntas condicionais até o perfil estar completo.
+2. **Inferência de recomendações** conduzida por **encadeamento para trás**: o motor parte das hipóteses (dietas) e consulta o perfil para calcular scores e contraindicações.
 
 </div>
 
@@ -249,7 +249,7 @@ Essa separação é um padrão clássico de sistemas especialistas e permite que
 
 * O modelo de probabilidade é **heurístico**.
 * A soma de evidências simula um acúmulo de suporte para cada hipótese.
-* Contraindicações são tratadas como **regras booleanas duras** — se ativadas, excluem a dieta independente do score.
+* Contraindicações são tratadas como **regras booleanas duras**: se ativadas, excluem a dieta independente do score.
 * Essa abordagem segue um modelo de **certeza acumulativa**.
 
 ---
