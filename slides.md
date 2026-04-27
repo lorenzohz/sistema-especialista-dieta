@@ -81,6 +81,10 @@ style: |
   }
 ---
 
+<!-- ================================================================ -->
+<!-- IDENTIFICAÇÃO                                                     -->
+<!-- ================================================================ -->
+
 # Sistema Especialista de Recomendação de Dieta
 ## Introdução à Inteligência Artificial
 
@@ -88,11 +92,15 @@ style: |
 
 * **Professor:** Wagner Igarashi
 * **Alunos:** Caetano Vendrame Mantovani, Lorenzo Henrique Zanetti, Vitor da Rocha Machado
-* **Linguagem:** Prolog (SWI-Prolog)
+* **Linguagem:** Prolog (SWI-Prolog) + Python
 
 ---
 
-# O Problema
+<!-- ================================================================ -->
+<!-- INTRODUÇÃO / MODELAGEM DO PROBLEMA                               -->
+<!-- ================================================================ -->
+
+# Introdução
 
 <div class="card">
 
@@ -100,311 +108,412 @@ style: |
 
 </div>
 
-### Por que usar um Sistema Especialista?
+### Por que um Sistema Especialista?
 
 * Várias dietas podem ser plausíveis para o mesmo perfil.
-* Algumas condições apresentam **contraindicações**.
-* Outras condições fornecem apenas **peso adicional** para a recomendação.
-* A entrevista pode ser eficiente, com perguntas condicionais quando necessário.
-* Ajuda o usuário a ter um norte naquilo que precisa, mas lembrando-o de consultar um especialista.
+* Algumas condições clínicas apresentam **contraindicações** estritas.
+* Outras condições fornecem apenas **peso adicional** à recomendação.
+* A entrevista pode ser conduzida com perguntas condicionais e eficientes.
+* O sistema orienta o usuário, lembrando-o de consultar um especialista.
 
 ---
+
+# Modelagem do Problema
+
+### Entidades principais
+
+* **Dieta**: hipótese a ser confirmada ou descartada — 11 dietas modeladas.
+* **Paciente**: indivíduo com perfil dinâmico de atributos.
+* **Evidência**: condição que favorece uma dieta (peso heurístico).
+* **Contraindicação**: condição que exclui uma dieta por razão clínica estrita.
+
+### Atributos do perfil
+
+<div class="cols" style="justify-content: center; text-align: center;">
+  <div class="col">
+    <span class="tag">objetivo</span><br/>
+    <span class="tag">nível de atividade</span><br/>
+    <span class="tag">faixa etária</span><br/>
+    <span class="tag">IMC</span>
+  </div>
+  <div class="col">
+    <span class="tag">doenças</span><br/>
+    <span class="tag">restrições alimentares</span><br/>
+    <span class="tag">tempo de preparo</span><br/>
+    <span class="tag">orçamento</span>
+  </div>
+</div>
+
+---
+
+# Modelagem do Problema: fórmula de score
+
+O score de cada dieta é calculado como:
+
+$$\text{Score}(d, x) = \min\left(0.99,\ P_{\text{base}}(d) + \sum_{e \in E(d,x)} \text{peso}(e)\right)$$
+
+Onde:
+* $P_{\text{base}}(d)$ é a probabilidade a priori da dieta $d$
+* $E(d, x)$ é o conjunto de evidências satisfeitas pelo perfil $x$
+* O limite de $0.99$ evita certeza absoluta
+
+---
+
+# Tabela de Dietas
+
+| ID | Nome | Prob. Base | Descrição resumida |
+|----|------|------------|--------------------|
+| low_carb | Low Carb | 0.50 | Redução de carboidratos; eficaz para perda de peso e controle glicêmico. |
+| vegetariana | Vegetariana | 0.50 | Exclui carnes, permite laticínios e ovos. Rica em fibras. |
+| vegana | Vegana | 0.45 | Exclusivamente vegetal; exige suplementação de B12. |
+| mediterranea | Mediterrânea | 0.55 | Alimentos frescos, azeite, peixes. Forte evidência cardiovascular e metabólica. |
+| hiperproteica | Hiperproteica | 0.50 | Alta proteína (1.6–2.2 g/kg); indicada para hipertrofia e prevenção de sarcopenia. |
+
+---
+
+# Tabela de Dietas
+
+| ID | Nome | Prob. Base | Descrição resumida |
+|----|------|------------|--------------------|
+| low_fat | Low Fat | 0.45 | Redução de gorduras; indicada para colesterol e perfis sedentários. |
+| sem_gluten | Sem Glúten | 0.40 | Exclusão de trigo, centeio e cevada. Obrigatória para celíacos. |
+| dash | DASH | 0.45 | Desenvolvida para hipertensão e síndrome metabólica; restrição de sódio. |
+| cetogenica | Cetogênica | 0.40 | Induz cetose; potente para perda de peso e controle glicêmico tipo 2. |
+| paleolitica | Paleolítica | 0.45 | Carnes, sementes e raízes; exclui grãos e processados. |
+| flexitariana | Flexitariana | 0.55 | Majoritariamente vegetal com consumo esporádico de carnes. |
+
+---
+
+<!-- ================================================================ -->
+<!-- FUNDAMENTAÇÃO TEÓRICA                                            -->
+<!-- ================================================================ -->
 
 # Fundamentação Teórica
 
-* Sistemas especialistas aplicam conhecimento explícito em forma de fatos e regras.
-* Prolog é adequado porque unifica, consulta fatos e calcula inferências naturalmente.
-* A recomendação é feita por um modelo híbrido:
-  * regras booleanas para contraindicações
-  * heurísticas numéricas para evidências
-* Explicabilidade é oferecida por predicados que retornam as razões de escolha.
+### Sistemas Especialistas
+
+* Aplicam conhecimento explícito de um domínio em forma de **fatos e regras**.
+* Separam a **base de conhecimento** do **motor de inferência** (Russell & Norvig, 2022).
+* Oferecem **explicabilidade**: o sistema pode justificar cada decisão tomada.
+
 
 ---
 
-# Arquitetura do Sistema
+# Fundamentação Teórica: Encadeamento
 
-```
-sistema-especialista-dieta/
-├── base_conhecimento.pl   ← dietas, perguntas, descrições, evidências e contraindicações
-├── motor_inferencia.pl    ← contexto, inferência, recomendações, explicações
-├── interface.py           ← menu, integração Python/Prolog, CRUD de base
-├── testes_unitarios.pl    ← validações automatizadas com plunit
-└── slides.md              ← apresentação do trabalho
-```
+<div class="cols">
+<div class="col">
 
----
+### ← Encadeamento para trás
+*(Backward Chaining)*
 
-# Base de Conhecimento: dietas e descrições
+Parte de uma **hipótese** e busca fatos que a provem.
 
-* São declaradas 11 dietas com probabilidade base.
-* Cada dieta possui uma descrição textual para apresentação.
-* Exemplo real:
+> "Esta dieta tem score alto?" → verifica cada regra de evidência → consulta o perfil do usuário.
 
-```prolog
-dieta(low_carb, 'Low Carb', 0.50).
-descricao_dieta(low_carb, 'Reducao de carboidratos priorizando proteinas, 
-vegetais e gorduras saudaveis. Eficaz para perda de peso e controle glicemico.').
-```
+**Usado em:** `calcular_score`, `contraindicada`, `recomendar`.
 
----
+</div>
+<div class="col">
 
-# Tabela de Dietas
+### Encadeamento para frente →
+*(Forward Chaining)*
 
-| ID | Nome | Probabilidade Base | Descrição |
-|----|------|---------------------|-----------|
-| low_carb | Low Carb | 0.50 | Redução de carboidratos priorizando proteínas, vegetais e gorduras saudáveis. Eficaz para perda de peso e controle glicêmico. |
-| vegetariana | Vegetariana | 0.50 | Baseada em vegetais. Exclui carnes, mas permite laticínios e ovos. Rica em fibras e antioxidantes. |
-| vegana | Vegana | 0.45 | Estritamente baseada em plantas. Exclui qualquer produto de origem animal, exige suplementação de B12 e proteína planejada. |
-| mediterranea | Mediterrânea | 0.55 | Focada em alimentos frescos, azeite, peixes, oleaginosas e grãos integrais. Fortemente associada à saúde cardiovascular. |
-| hiperproteica | Hiperproteica | 0.50 | Alta ingestão de proteínas (1.6-2.2g/kg). Focada na manutenção e hipertrofia muscular, ideal para atletas e praticantes de musculação. |
+Parte de **fatos conhecidos** e deriva novas conclusões.
+
+> Usuário responde `restricao_carne = sim` → sistema avança e ativa `restricao_laticinios`.
+
+**Usado em:** `listar_perguntas_condicionais_ativas`.
+
+</div>
+</div>
 
 ---
 
-# Tabela de Dietas
+# Fundamentação Teórica: como os dois coexistem
 
-| ID | Nome | Probabilidade Base | Descrição |
-|----|------|---------------------|-----------|
-| low_fat | Low Fat | 0.45 | Redução drástica de gorduras totais. Indicada para controle de colesterol e saúde cardiovascular em perfis sedentários a leve. |
-| sem_gluten | Sem Gluten | 0.40 | Exclusão total de trigo, centeio e cevada. Obrigatória para celíacos e indicada para sensibilidade não celíaca ao glúten. |
-| dash | DASH | 0.45 | Desenvolvida para reduzir a pressão arterial. Enfatiza potássio, magnésio e restrição severa de sódio. |
-| cetogenica | Cetogênica | 0.40 | Altíssima ingestão de gorduras e carboidratos quase zerados (< 50g/dia). Induz cetose, potente para perda de peso e controle glicêmico tipo 2. |
-| paleolitica | Paleolítica | 0.45 | Inspirada na alimentação pré-agricola: carnes, sementes e raízes. Exclui grãos, laticínios e alimentos processados. |
-| flexitariana | Flexitariana | 0.55 | Majoritariamente vegetariana, com consumo esporádico e flexível de carnes. Equilibra saúde, sustentabilidade e praticidade. |
+<div class="card">
 
----
+O sistema opera em **duas fases complementares**:
 
-# Base de Conhecimento: perguntas e perfil
+1. **Coleta de fatos** — conduzida por **encadeamento para frente**: respostas do usuário disparam novas perguntas condicionais até o perfil estar completo.
+2. **Inferência de recomendações** — conduzida por **encadeamento para trás**: o motor parte das hipóteses (dietas) e consulta o perfil para calcular scores e contraindicações.
 
-* O sistema pergunta atributos do usuário com o predicado `pergunta/5`.
-* Existem perguntas:
-  * base: sempre ativas
-  * condicionais: ativadas por resposta anterior
-* Exemplos:
+</div>
 
-```prolog
-pergunta(objetivo, base, 'Qual e o seu principal objetivo com a dieta?', 
-[perda_peso, ganho_massa, saude_geral, controle_cronicas, performance_atletica], 
-'O objetivo orienta o perfil nutricional recomendado.').
-```
-
-```prolog
-pergunta(tipo_diabetes, depende(tem_diabetes, sim), 'Qual e o tipo do seu diabetes?', 
-[tipo_1, tipo_2, pre_diabetes], 'Tipo clinico altera seguranca e conduta nutricional.').
-```
+Essa separação é um padrão clássico de sistemas especialistas (Russell & Norvig, cap. 9) e permite que a entrevista seja eficiente sem comprometer a profundidade do raciocínio.
 
 ---
 
-# Tabela de Perguntas Base
+# Fundamentação Teórica: probabilidade heurística
 
-| Atributo | Texto da Pergunta | Opções | Justificativa |
-|----------|-------------------|--------|---------------|
-| objetivo | Qual é o seu principal objetivo com a dieta? | perda_peso, ganho_massa, saude_geral, controle_cronicas, performance_atletica | O objetivo orienta o perfil nutricional recomendado. |
-| nivel_atividade | Qual é o seu nível de atividade física semanal? | sedentario, leve, moderado, intenso | O nível de atividade altera demanda calórica e proteica. |
-| faixa_etaria | Qual é a sua faixa etária? | jovem, adulto, idoso | A faixa etária afeta necessidades nutricionais e segurança clínica. |
-| imc_faixa | Como você classificaria seu peso corporal atual? | abaixo_peso, normal, sobrepeso, obesidade | O IMC orienta a intensidade de ajuste energético da dieta. |
-| tem_diabetes | Você possui diabetes ou pré-diabetes? | sim, nao | Diabetes exige controle de glicemia e carboidratos. |
-| tem_hipertensao | Você possui hipertensão diagnosticada? | sim, nao | Hipertensão prioriza dietas com controle de sódio e perfil cardioprotetor. |
-| tem_colesterol_alto | Você possui colesterol elevado? | sim, nao | Colesterol elevado favorece padrões com menor gordura saturada. |
+* O modelo de probabilidade é **heurístico**, não bayesiano estrito.
+* A soma de evidências simula um acúmulo de suporte para cada hipótese.
+* Contraindicações são tratadas como **regras booleanas duras** — se ativadas, excluem a dieta independente do score.
+* Essa abordagem é análoga ao modelo de **certeza acumulativa** dos sistemas especialistas clássicos (Shortliffe, MYCIN, 1976).
 
 ---
 
-# Tabela de Perguntas Base
-
-| Atributo | Texto da Pergunta | Opções | Justificativa |
-|----------|-------------------|--------|---------------|
-| tem_problemas_renais | Você possui doença renal crônica ou insuficiência renal? | sim, nao | Doença renal restringe dietas com alta carga proteica. |
-| tem_doenca_cardiaca | Você possui doença cardíaca diagnosticada? | sim, nao | Doença cardíaca restringe dietas de alto risco cardiovascular. |
-| restricao_carne | Você possui restrição ao consumo de carnes? | sim, nao | Restrição de carne direciona para perfis vegetarianos ou veganos. |
-| alergia_lactose | Você possui intolerância a lactose ou alergia à proteína do leite? | sim, nao | A restrição a lactose altera fontes proteicas e planejamento alimentar. |
-| restricao_gluten | Você possui doença celíaca ou sensibilidade ao glúten? | sim, nao | A restrição ao glúten exige adaptações específicas. |
-| tempo_preparo | Como é sua disponibilidade de tempo para preparar refeições? | baixa, media, alta | Algumas dietas exigem maior preparo e planejamento. |
-| orcamento | Como é seu orçamento mensal para alimentação? | baixo, flexivel, alto | O custo de ingredientes pode inviabilizar certos padrões alimentares. |
-
----
-
-# Tabela de Perguntas Condicionais
-
-| Atributo | Dependência | Texto da Pergunta | Opções | Justificativa |
-|----------|-------------|-------------------|--------|---------------|
-| frequencia_carne | depende(restricao_carne, nao) | Você consome carne com qual frequência semanal? | diariamente, ocasionalmente, raramente | Distingue perfis onívoros e flexitarianos. |
-| restricao_laticinios | depende(restricao_carne, sim) | Já que você não consome carne, também restringe laticínios e ovos? | sim, nao | Distingue perfil vegetariano de vegano. |
-| disposicao_restricao | depende(objetivo, perda_peso) | Para perder peso, você aceita cortar grupos alimentares de forma intensa? | sim, nao | Dietas muito restritivas exigem alta adesão. |
-| tipo_diabetes | depende(tem_diabetes, sim) | Qual é o tipo do seu diabetes? | tipo_1, tipo_2, pre_diabetes | Tipo clínico altera segurança e conduta nutricional. |
-
----
-
-# Modelagem do perfil do usuário
-
-* As respostas são armazenadas dinamicamente com predicados:
-  * `tem_objetivo/2`, `tem_nivel_atividade/2`, `tem_faixa_etaria/2`, etc.
-  * `tem_doenca/2`, `nao_tem_doenca/2`
-  * `tem_restricao/2`, `nao_tem_restricao/2`
-* O paciente atual é controlado por `paciente_atual/1` e `definir_individuo_atual/1`.
-* `limpar_respostas/1` reseta o perfil entre sessões.
-
----
-
-# Regras de evidência
-
-* Cada dieta possui fatos `evidencia(Dieta, X, Peso)`.
-* O peso representa quanto a condição favorece a dieta.
-* Exemplo:
-
-```prolog
-evidencia(low_carb, X, 0.25) :- tem_objetivo(X, perda_peso).
-evidencia(vegana, X, 0.30) :- tem_restricao(X, laticinios).
-evidencia(sem_gluten, X, 0.50) :- tem_restricao(X, gluten).
-```
-
-* Isso permite diferenciar dietas por perfil clínico e restrições.
-
----
-
-# Regras de contraindicação
-
-* `contraindicada(Dieta, X)` define exclusões estritas.
-* Apenas dietas não contraindicadas são consideradas.
-* Exemplo de lógica presente no código:
-  * `cetogenica` pode ser contraindicada para diabetes tipo 1 ou doença cardíaca
-  * `hiperproteica` pode ser contraindicada para problemas renais
-
----
-
-# Tabela de Contraindicações
-
-| Dieta | Condição | Atributo Relacionado | Justificativa |
-|-------|----------|----------------------|---------------|
-| cetogenica | tem_disposicao_restricao(X, nao) | disposicao_restricao | Muito restritiva, exige alta adesão. |
-| cetogenica | tem_doenca(X, colesterol_alto) | tem_colesterol_alto | Incompatível com altíssima gordura. |
-| cetogenica | tem_doenca(X, doenca_cardiaca) | tem_doenca_cardiaca | Risco cardiovascular elevado. |
-| cetogenica | tem_tipo_diabetes(X, tipo_1) | tipo_diabetes | Requer controle glicêmico estável. |
-| hiperproteica | tem_restricao(X, carne) | restricao_carne | Baseia-se fundamentalmente em carnes. |
-| hiperproteica | tem_doenca(X, problemas_renais) | tem_problemas_renais | Sobrecarrega rins. |
-| vegetariana | tem_restricao(X, laticinios) | restricao_laticinios | Permite laticínios; inviável com restrição. |
-
----
-
-# Tabela de Contraindicações
-
-| Dieta | Condição | Atributo Relacionado | Justificativa |
-|-------|----------|----------------------|---------------|
-| vegana | tem_tempo_preparo(X, baixa) | tempo_preparo | Planejamento de proteínas é essencial. |
-| mediterranea | tem_tempo_preparo(X, baixa) | tempo_preparo | Requer preparo de refeições frescas. |
-| mediterranea | tem_orcamento(X, baixo) | orcamento | Ingredientes frescos são caros. |
-| paleolitica | tem_tempo_preparo(X, baixa) | tempo_preparo | Carnes e alimentos não processados exigem preparo. |
-| paleolitica | tem_orcamento(X, baixo) | orcamento | Carnes e sementes são custosos. |
-| paleolitica | tem_doenca(X, problemas_renais) | tem_problemas_renais | Alta proteína sobrecarrega rins. |
-| low_fat | tem_objetivo(X, ganho_massa) | objetivo | Impede ganho muscular efetivo. |
-| sem_gluten | tem_objetivo(X, ganho_massa) | objetivo | Muito restritiva para ganho muscular. |
-
----
-
-# Motor de inferência
-
-* `calcular_score/3` determina o score de cada dieta:
-  * base + soma das evidências satisfeitas
-  * limite em `0.99`
-* `nao_contraindicada/2` garante exclusão de dietas perigosas.
-* `recomendar/2` produz uma lista ordenada de `Score-Dieta-Nome`.
-
----
-
-# Fluxo de recomendação
-
-* O motor busca:
-  * todas as dietas definidas em `dieta/3`
-  * somente dietas não contraindicadas
-  * score de cada dieta com evidências aplicáveis
-* Em seguida, ordena resultados em ordem decrescente de score.
-* Essa lista é a base para a recomendação final.
-
----
-
-# Perguntas condicionais
-
-* `listar_perguntas_base/1` retorna perguntas iniciais.
-* `listar_perguntas_condicionais_ativas/2` ativa perguntas quando uma resposta específica já existe.
-* Exemplo de condição:
-  * se `restricao_carne = sim`, então pergunta `restricao_laticinios`
-  * se `tem_diabetes = sim`, então pergunta `tipo_diabetes`
-
----
-
-# Interface Python e integração
-
-* `interface.py` usa `pyswip` para rodar SWI-Prolog dentro do Python.
-* No `__init__`, carrega:
-  * `motor_inferencia.pl`
-  * `base_conhecimento.pl`
-* O menu do Python trata:
-  * questionário interativo
-  * explicações de recomendações
-  * operações de CRUD no arquivo Prolog
-  * execução de testes unitários
-
----
-
-# Gestão da base de conhecimento
-
-* O Python parseia `base_conhecimento.pl` com expressões regulares.
-* Permite:
-  * incluir dieta e descrição
-  * alterar probabilidade, nome e descrição
-  * incluir/alterar/excluir regras de `evidencia/3`
-  * incluir/alterar/excluir regras de `contraindicada/2`
-* Após qualquer modificação, o Prolog é recarregado para refletir a mudança.
-
----
+<!-- ================================================================ -->
+<!-- MATERIAIS E MÉTODOS                                              -->
+<!-- ================================================================ -->
 
 # Materiais e Métodos
 
-* Ambiente: Windows, Python 3, SWI-Prolog.
-* Dependência principal: `pyswip`.
-* Execução principal: `python interface.py`.
-* Testes: `swipl -q -g "executar_testes_sistema" -t halt testes_unitarios.pl`.
-* Arquivos principais:
-  * `base_conhecimento.pl`
-  * `motor_inferencia.pl`
-  * `interface.py`
-  * `testes_unitarios.pl`
+### Ambiente e ferramentas
+
+* **Sistema operacional:** Windows 10/11
+* **Linguagens:** SWI-Prolog 9.x e Python 3.11+
+* **Biblioteca de integração:** `pyswip` (ponte Python ↔ SWI-Prolog via `subprocess`)
+* **Framework de testes:** `plunit` (nativo do SWI-Prolog)
+
+### Execução
+
+```bash
+# Sistema principal
+python interface.py
+
+# Testes unitários
+swipl -q -g "executar_testes_sistema" -t halt testes_unitarios.pl
+```
 
 ---
 
-# Testes Unitários
+# Materiais e Métodos: arquitetura de arquivos
 
-* `testes_unitarios.pl` usa `plunit` para validação automatizada.
-* Estrutura de testes:
-  * score e crescimento por evidências
-  * contraindicações específicas
-  * ordenação de recomendações
-  * ativação de perguntas condicionais
-  * consistência do modelo relacional
-  * explicabilidade de fatos e exclusões
+```
+sistema-especialista-dieta/
+├── base_conhecimento.pl   ← dietas, perguntas, evidências, contraindicações
+├── motor_inferencia.pl    ← contexto do indivíduo, inferência, explicabilidade
+├── interface.py           ← menu interativo, integração Python/Prolog, CRUD
+├── testes_unitarios.pl    ← 6 suítes de testes com plunit
+└── slides.md              ← esta apresentação
+```
+
+### Fluxo de dados
+
+`interface.py` carrega `motor_inferencia.pl`, que consulta `base_conhecimento.pl`.
+Respostas do usuário são `assert`adas dinamicamente no Prolog em tempo de execução.
+
+---
+
+<!-- ================================================================ -->
+<!-- DESENVOLVIMENTO                                                   -->
+<!-- ================================================================ -->
+
+# Desenvolvimento: base de conhecimento
+
+* **11 dietas** declaradas com `dieta(Id, Nome, ProbBase)` e descrições textuais.
+* **15 perguntas** com `pergunta/5`: atributo, tipo, texto, opções e justificativa.
+* **Perguntas base**: sempre apresentadas.
+* **Perguntas condicionais**: ativadas dinamicamente por respostas anteriores.
+
+```prolog
+dieta(dash, 'DASH', 0.45).
+
+pergunta(tipo_diabetes, depende(tem_diabetes, sim),
+    'Qual e o tipo do seu diabetes?',
+    [tipo_1, tipo_2, pre_diabetes],
+    'Tipo clinico altera seguranca e conduta nutricional.').
+```
 
 ---
 
-# Demonstração Prática
+# Desenvolvimento: perguntas condicionais
 
-* Fluxo típico:
-  1. iniciar `python interface.py`
-  2. responder perguntas do questionário
-  3. receber lista ordenada de dietas
-  4. visualizar justificativas de escolha
-  5. revisar dietas descartadas por contraindicação
+| Atributo | Depende de | Texto |
+|----------|-----------|-------|
+| frequencia_carne | restricao_carne = nao | Você consome carne com qual frequência semanal? |
+| restricao_laticinios | restricao_carne = sim | Também restringe laticínios e ovos? |
+| disposicao_restricao | objetivo = perda_peso | Aceita cortar grupos alimentares de forma intensa? |
+| tipo_diabetes | tem_diabetes = sim | Qual é o tipo do seu diabetes? |
 
-* A interface também permite testar CRUD em tempo real e rodar os testes.
+<div class="note">
+
+A ativação condicional é **encadeamento para frente** em ação: o fato `restricao_carne = sim` propaga para frente e faz surgir `restricao_laticinios`.
+
+</div>
 
 ---
+
+# Desenvolvimento: modelagem do perfil
+
+* Respostas armazenadas como predicados dinâmicos:
+  * `tem_objetivo/2`, `tem_nivel_atividade/2`, `tem_faixa_etaria/2`, etc.
+  * `tem_doenca/2` / `nao_tem_doenca/2`
+  * `tem_restricao/2` / `nao_tem_restricao/2`
+* O indivíduo ativo é controlado por `paciente_atual/1`.
+* `limpar_respostas/1` reseta o perfil entre sessões.
+* `registrar_resposta/3` mantém consistência: ao responder `tem_diabetes = nao`, o predicado `tem_tipo_diabetes` é removido automaticamente.
+
+---
+
+# Desenvolvimento: regras de evidência
+
+```prolog
+evidencia(low_carb,     X, 0.25) :- tem_objetivo(X, perda_peso).
+evidencia(dash,         X, 0.30) :- tem_doenca(X, hipertensao).
+evidencia(dash,         X, 0.12) :- tem_doenca(X, diabetes).
+evidencia(mediterranea, X, 0.10) :- tem_doenca(X, diabetes).
+evidencia(hiperproteica,X, 0.08) :- tem_faixa_etaria(X, idoso).
+evidencia(vegana,       X, 0.10) :- tem_imc_faixa(X, obesidade).
+```
+
+<div class="note">
+
+Cada chamada é resolvida por **encadeamento para trás**: o motor parte da hipótese (a dieta) e verifica se o perfil satisfaz a condição declarada.
+
+</div>
+
+---
+
+# Desenvolvimento: regras de contraindicação
+
+* `contraindicada(Dieta, X)` é uma **regra booleana estrita**.
+* Dietas contraindicadas são completamente excluídas do ranking.
+
+```prolog
+contraindicada(cetogenica, X) :- tem_doenca(X, colesterol_alto).
+contraindicada(cetogenica, X) :- tem_doenca(X, doenca_cardiaca).
+contraindicada(cetogenica, X) :- tem_tipo_diabetes(X, tipo_1).
+contraindicada(cetogenica, X) :- tem_imc_faixa(X, abaixo_peso).
+contraindicada(hiperproteica,X):- tem_doenca(X, problemas_renais).
+contraindicada(vegetariana,  X):- tem_restricao(X, laticinios).
+```
+
+---
+
+# Tabela de Contraindicações
+
+| Dieta | Condição | Justificativa |
+|-------|----------|---------------|
+| cetogenica | disposicao_restricao = nao | Muito restritiva; exige alta adesão. |
+| cetogenica | colesterol_alto | Incompatível com altíssima ingestão de gordura. |
+| cetogenica | doenca_cardiaca | Risco cardiovascular elevado. |
+| cetogenica | tipo_diabetes = tipo_1 | Requer controle glicêmico estável. |
+| cetogenica | imc_faixa = abaixo_peso | Risco de déficit calórico e perda muscular. |
+| hiperproteica | restricao_carne | Baseia-se fundamentalmente em carnes. |
+| hiperproteica | problemas_renais | Sobrecarrega a função renal. |
+| vegetariana | restricao_laticinios | Depende de laticínios; inviável com essa restrição. |
+| vegana | tempo_preparo = baixa | Planejamento de proteínas vegetais é essencial. |
+| mediterranea | orcamento = baixo | Ingredientes frescos têm custo elevado. |
+| paleolitica | problemas_renais | Alta proteína sobrecarrega os rins. |
+| low_fat | objetivo = ganho_massa | Impede síntese hormonal necessária ao ganho muscular. |
+
+---
+
+# Desenvolvimento: motor de inferência
+
+```prolog
+calcular_score(Dieta, X, Score) :-
+    dieta(Dieta, _, ProbBase),
+    findall(Peso, evidencia(Dieta, X, Peso), Pesos),
+    sum_list(Pesos, Soma),
+    Score is min(0.99, ProbBase + Soma).
+
+recomendar(X, Lista) :-
+    findall(Score-Dieta-Nome, (
+        dieta(Dieta, Nome, _),
+        nao_contraindicada(Dieta, X),
+        calcular_score(Dieta, X, Score)
+    ), Unsorted),
+    msort(Unsorted, Sorted),
+    reverse(Sorted, Lista).
+```
+
+---
+
+# Desenvolvimento: explicabilidade
+
+O sistema responde a três perguntas:
+
+* **"Por que esta dieta foi recomendada?"**
+  → `fatos_confirmados/3` lista os pesos que contribuíram ao score.
+
+* **"Por que esta dieta foi descartada?"**
+  → `razoes_exclusao/3` lista as contraindicações ativadas.
+
+* **"Por que foi perguntado sobre X?"**
+  → `detalhes_pergunta/4` retorna a justificativa declarada em `pergunta/5`.
+
+```prolog
+fatos_confirmados(Dieta, X, Pesos) :-
+    findall(Peso, evidencia(Dieta, X, Peso), Pesos).
+```
+
+---
+
+# Desenvolvimento: interface e CRUD
+
+* `interface.py` usa `pyswip` para invocar SWI-Prolog embutido no Python.
+* O questionário aplica **forward chaining**: após cada resposta, checa quais condicionais foram ativadas.
+* O CRUD parseia `base_conhecimento.pl` com expressões regulares e permite **C**riar, **R**eadsitar, **A**lterar e **E**xcluir dietas, evidências e contraindicações em tempo de execução.
+* Após qualquer modificação, o Prolog é recarregado automaticamente.
+
+---
+
+# Desenvolvimento: testes unitários
+
+* `testes_unitarios.pl` organiza **6 suítes** com `plunit`, cobrindo todos os componentes.
+
+| Suíte | O que valida |
+|-------|-------------|
+| `calculo_score_lpo` | score base, crescimento por evidência, limite 0.99 |
+| `contraindicacoes_lpo` | cada regra de exclusão estrita |
+| `recomendacoes_lpo` | ordenação, ausência de dietas bloqueadas, consistência |
+| `perguntas_condicionais_lpo` | ativação e não-repetição de condicionais |
+| `modelo_relacional_lpo` | consistência do armazenamento dinâmico |
+| `explicabilidade_lpo` | `fatos_confirmados`, `razoes_exclusao`, `detalhes_pergunta` |
+
+---
+
+# Desenvolvimento: fluxo completo
+
+```
+Usuário inicia sessão
+        │
+        ▼
+  Perguntas base ──────────────────────────────────────────────┐
+        │                                                       │
+        │  resposta nova    ← FORWARD CHAINING →               │
+        ▼                                                       │
+  Ativa condicionais? ──── sim ──► faz pergunta adicional ─────┘
+        │ não
+        ▼
+  Perfil completo → recomendar(X, Lista)   ← BACKWARD CHAINING
+        │
+        ▼
+  Lista ordenada por score decrescente
+        │
+        ▼
+  Usuário consulta explicações (por que? / por que não?)
+```
+
+---
+
+<!-- ================================================================ -->
+<!-- CONCLUSÕES                                                        -->
+<!-- ================================================================ -->
 
 # Conclusões
 
-* O sistema integra **conhecimento declarativo** e **inferência heurística**.
-* A modelagem de perfil é robusta para objetivos, doenças e restrições.
-* A explicabilidade ajuda a avaliar e justificar cada recomendação.
-* A interface Python torna o protótipo utilizável e extensível.
-* Os testes garantem qualidade para diferentes perfis e condições.
+* O sistema combina **encadeamento para frente** na condução da entrevista e **encadeamento para trás** na inferência — arquitetura híbrida clássica de sistemas especialistas.
+* As evidências refletem recomendações clínicas atuais: diabetes para DASH e Mediterrânea, prevenção de sarcopenia para hiperproteica em idosos, risco metabólico para cetogênica em abaixo do peso.
+* A **explicabilidade** permite que o usuário entenda o porquê de cada recomendação e exclusão.
+* O CRUD em tempo de execução torna a base extensível sem recompilação.
+* Os 6 conjuntos de testes unitários garantem cobertura de todos os componentes críticos.
+
+<div class="note">
+
+⚠️ Este protótipo é apenas informativo. Consulte um nutricionista ou médico para recomendação correta e precisa.
+
+</div>
 
 ---
+
+<!-- ================================================================ -->
+<!-- REFERÊNCIAS                                                       -->
+<!-- ================================================================ -->
 
 # Referências Bibliográficas
 
@@ -412,5 +521,6 @@ evidencia(sem_gluten, X, 0.50) :- tem_restricao(X, gluten).
 * BRATKO, I. *Prolog Programming for Artificial Intelligence*. 4. ed. Pearson, 2011.
 * CLOCKSIN, W. F.; MELLISH, C. S. *Programming in Prolog*. 5. ed. Springer, 2003.
 * SWI-PROLOG. *SWI-Prolog Reference Manual*. Disponível em: https://www.swi-prolog.org/pldoc/. Acesso em: abr. 2026.
-* ORNISH, D. et al. *Intensive Lifestyle Changes for Reversal of Coronary Heart Disease*. JAMA, 1998. *(base para dieta cardiovascular)*
-* SACKS, F. M. et al. *Effects on Blood Pressure of Reduced Dietary Sodium and the DASH Diet*. NEJM, 2001. *(base para dieta DASH)*
+* SHORTLIFFE, E. H. *Computer-Based Medical Consultations: MYCIN*. Elsevier, 1976.
+* ORNISH, D. et al. *Intensive Lifestyle Changes for Reversal of Coronary Heart Disease*. JAMA, 1998.
+* SACKS, F. M. et al. *Effects on Blood Pressure of Reduced Dietary Sodium and the DASH Diet*. NEJM, 2001.

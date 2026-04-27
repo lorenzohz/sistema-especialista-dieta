@@ -343,6 +343,7 @@ evidencia(low_carb, X, 0.12) :- tem_imc_faixa(X, obesidade).
 evidencia(low_carb, X, 0.05) :- nao_tem_restricao(X, carne).
 evidencia(low_carb, X, 0.08) :- tem_disposicao_restricao(X, sim).
 evidencia(low_carb, X, 0.05) :- tem_doenca(X, colesterol_alto).
+evidencia(low_carb, X, 0.05) :- tem_doenca(X, hipertensao).
 
 evidencia(vegetariana, X, 0.30) :- tem_restricao(X, carne).
 evidencia(vegetariana, X, 0.10) :- nao_tem_restricao(X, laticinios).
@@ -360,9 +361,12 @@ evidencia(vegana, X, 0.10) :- tem_restricao(X, lactose).
 evidencia(vegana, X, 0.08) :- tem_objetivo(X, saude_geral).
 evidencia(vegana, X, 0.08) :- tem_doenca(X, colesterol_alto).
 evidencia(vegana, X, 0.05) :- tem_faixa_etaria(X, jovem).
+evidencia(vegana, X, 0.07) :- tem_imc_faixa(X, sobrepeso).
+evidencia(vegana, X, 0.10) :- tem_imc_faixa(X, obesidade).
 
 evidencia(mediterranea, X, 0.15) :- tem_objetivo(X, saude_geral).
 evidencia(mediterranea, X, 0.12) :- tem_objetivo(X, controle_cronicas).
+evidencia(mediterranea, X, 0.10) :- tem_doenca(X, diabetes).
 evidencia(mediterranea, X, 0.05) :- tem_objetivo(X, performance_atletica).
 evidencia(mediterranea, X, 0.05) :- nao_tem_restricao(X, carne).
 evidencia(mediterranea, X, 0.12) :- tem_doenca(X, colesterol_alto).
@@ -384,6 +388,7 @@ evidencia(hiperproteica, X, 0.08) :- tem_imc_faixa(X, abaixo_peso).
 evidencia(hiperproteica, X, 0.05) :- tem_imc_faixa(X, normal).
 evidencia(hiperproteica, X, 0.08) :- tem_faixa_etaria(X, jovem).
 evidencia(hiperproteica, X, 0.05) :- tem_faixa_etaria(X, adulto).
+evidencia(hiperproteica, X, 0.08) :- tem_faixa_etaria(X, idoso).
 evidencia(hiperproteica, X, 0.05) :- tem_frequencia_carne(X, diariamente).
 
 evidencia(low_fat, X, 0.10) :- tem_objetivo(X, perda_peso).
@@ -399,9 +404,9 @@ evidencia(low_fat, X, 0.05) :- tem_imc_faixa(X, sobrepeso).
 evidencia(low_fat, X, 0.08) :- tem_imc_faixa(X, obesidade).
 
 evidencia(sem_gluten, X, 0.50) :- tem_restricao(X, gluten).
-evidencia(sem_gluten, X, 0.05) :- tem_objetivo(X, saude_geral).
 
 evidencia(dash, X, 0.30) :- tem_doenca(X, hipertensao).
+evidencia(dash, X, 0.12) :- tem_doenca(X, diabetes).
 evidencia(dash, X, 0.20) :- tem_objetivo(X, controle_cronicas).
 evidencia(dash, X, 0.08) :- tem_objetivo(X, saude_geral).
 evidencia(dash, X, 0.05) :- nao_tem_restricao(X, carne).
@@ -417,14 +422,14 @@ evidencia(cetogenica, X, 0.15) :- tem_objetivo(X, perda_peso).
 evidencia(cetogenica, X, 0.15) :- tem_doenca(X, diabetes).
 evidencia(cetogenica, X, 0.15) :- tem_tipo_diabetes(X, tipo_2).
 evidencia(cetogenica, X, 0.10) :- tem_tipo_diabetes(X, pre_diabetes).
-evidencia(cetogenica, X, 0.28) :- tem_disposicao_restricao(X, sim).
+evidencia(cetogenica, X, 0.12) :- tem_disposicao_restricao(X, sim).
 evidencia(cetogenica, X, 0.08) :- tem_orcamento(X, alto).
 evidencia(cetogenica, X, 0.12) :- tem_imc_faixa(X, obesidade).
 evidencia(cetogenica, X, 0.05) :- tem_nivel_atividade(X, sedentario).
 
 evidencia(paleolitica, X, 0.15) :- tem_objetivo(X, saude_geral).
 evidencia(paleolitica, X, 0.12) :- tem_objetivo(X, performance_atletica).
-evidencia(paleolitica, X, 0.15) :- tem_restricao(X, gluten).
+evidencia(paleolitica, X, 0.08) :- tem_restricao(X, gluten).
 evidencia(paleolitica, X, 0.10) :- tem_orcamento(X, alto).
 evidencia(paleolitica, X, 0.05) :- tem_orcamento(X, flexivel).
 evidencia(paleolitica, X, 0.10) :- tem_nivel_atividade(X, intenso).
@@ -454,12 +459,12 @@ contraindicada(vegetariana, X)   :- tem_restricao(X, laticinios).
 contraindicada(cetogenica, X)    :- tem_disposicao_restricao(X, nao).
 contraindicada(cetogenica, X)    :- tem_doenca(X, colesterol_alto).
 contraindicada(cetogenica, X)    :- tem_doenca(X, doenca_cardiaca).
+contraindicada(cetogenica, X)    :- tem_imc_faixa(X, abaixo_peso).
 contraindicada(mediterranea, X)  :- tem_tempo_preparo(X, baixa).
 contraindicada(mediterranea, X)  :- tem_orcamento(X, baixo).
 contraindicada(vegana, X)        :- tem_tempo_preparo(X, baixa).
 contraindicada(paleolitica, X)   :- tem_tempo_preparo(X, baixa).
 contraindicada(paleolitica, X)   :- tem_orcamento(X, baixo).
 contraindicada(low_fat, X)       :- tem_objetivo(X, ganho_massa).
-contraindicada(sem_gluten, X)    :- tem_objetivo(X, ganho_massa).
 contraindicada(paleolitica, X)   :- tem_doenca(X, problemas_renais).
 contraindicada(cetogenica, X)    :- tem_tipo_diabetes(X, tipo_1).
