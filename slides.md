@@ -241,16 +241,16 @@ O sistema opera em **duas fases complementares**:
 
 </div>
 
-Essa separação é um padrão clássico de sistemas especialistas (Russell & Norvig, cap. 9) e permite que a entrevista seja eficiente sem comprometer a profundidade do raciocínio.
+Essa separação é um padrão clássico de sistemas especialistas e permite que a entrevista seja eficiente sem comprometer a profundidade do raciocínio.
 
 ---
 
 # Fundamentação Teórica: probabilidade heurística
 
-* O modelo de probabilidade é **heurístico**, não bayesiano estrito.
+* O modelo de probabilidade é **heurístico**.
 * A soma de evidências simula um acúmulo de suporte para cada hipótese.
 * Contraindicações são tratadas como **regras booleanas duras** — se ativadas, excluem a dieta independente do score.
-* Essa abordagem é análoga ao modelo de **certeza acumulativa** dos sistemas especialistas clássicos (Shortliffe, MYCIN, 1976).
+* Essa abordagem segue um modelo de **certeza acumulativa**.
 
 ---
 
@@ -264,7 +264,7 @@ Essa separação é um padrão clássico de sistemas especialistas (Russell & No
 
 * **Sistema operacional:** Windows 10/11
 * **Linguagens:** SWI-Prolog 9.x e Python 3.11+
-* **Biblioteca de integração:** `pyswip` (ponte Python ↔ SWI-Prolog via `subprocess`)
+* **Biblioteca de integração:** `pyswip` (ponte Python p/ SWI-Prolog via `subprocess`)
 * **Framework de testes:** `plunit` (nativo do SWI-Prolog)
 
 ### Execução
@@ -286,8 +286,7 @@ sistema-especialista-dieta/
 ├── base_conhecimento.pl   ← dietas, perguntas, evidências, contraindicações
 ├── motor_inferencia.pl    ← contexto do indivíduo, inferência, explicabilidade
 ├── interface.py           ← menu interativo, integração Python/Prolog, CRUD
-├── testes_unitarios.pl    ← 6 suítes de testes com plunit
-└── slides.md              ← esta apresentação
+└── testes_unitarios.pl    ← 6 suítes de testes com plunit
 ```
 
 ### Fluxo de dados
@@ -447,7 +446,7 @@ fatos_confirmados(Dieta, X, Pesos) :-
 
 * `interface.py` usa `pyswip` para invocar SWI-Prolog embutido no Python.
 * O questionário aplica **forward chaining**: após cada resposta, checa quais condicionais foram ativadas.
-* O CRUD parseia `base_conhecimento.pl` com expressões regulares e permite **C**riar, **R**eadsitar, **A**lterar e **E**xcluir dietas, evidências e contraindicações em tempo de execução.
+* O CRUD parseia `base_conhecimento.pl` com expressões regulares e permite Criar, Ler, Editar e Excluir dietas, evidências e contraindicações em tempo de execução.
 * Após qualquer modificação, o Prolog é recarregado automaticamente.
 
 ---
@@ -474,9 +473,9 @@ Usuário inicia sessão
         │
         ▼
   Perguntas base ──────────────────────────────────────────────┐
-        │                                                       │
+        │                                                      │
         │  resposta nova    ← FORWARD CHAINING →               │
-        ▼                                                       │
+        ▼                                                      │
   Ativa condicionais? ──── sim ──► faz pergunta adicional ─────┘
         │ não
         ▼
@@ -497,7 +496,7 @@ Usuário inicia sessão
 
 # Conclusões
 
-* O sistema combina **encadeamento para frente** na condução da entrevista e **encadeamento para trás** na inferência — arquitetura híbrida clássica de sistemas especialistas.
+* O sistema combina **encadeamento para frente** na condução da entrevista e **encadeamento para trás** na inferência, formando uma arquitetura híbrida clássica de sistemas especialistas.
 * As evidências refletem recomendações clínicas atuais: diabetes para DASH e Mediterrânea, prevenção de sarcopenia para hiperproteica em idosos, risco metabólico para cetogênica em abaixo do peso.
 * A **explicabilidade** permite que o usuário entenda o porquê de cada recomendação e exclusão.
 * O CRUD em tempo de execução torna a base extensível sem recompilação.
